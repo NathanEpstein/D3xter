@@ -1,17 +1,8 @@
 <html>
   <head>
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    <script src='lib.js'></script>
-    <style type="text/css">
-      svg path, svg line{
-        fill:none;
-        stroke:black;
-      }
-      svg text {
-        font-family: sans-serif;
-        font-size: 11px;
-      }
-    </style>
+    <script src='js/lib.js'></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
   </head>
 
   <body>
@@ -51,7 +42,7 @@
       var histocon = {
         xLab: 'This is my x-axis',
         height:200,
-        width:250
+        width:550
       }
 
        var scat = xyPlot(x,y,config2)

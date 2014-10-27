@@ -1,3 +1,6 @@
+// histo bin width is still not working right for arrays with smaller values
+
+
 // START FUNCTION: This function creates the canvas, the everything bundle within the canvas, the axes (given scale functions), and the axes labels
 start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selector){
 
