@@ -1,27 +1,15 @@
 // START FUNCTION: This function creates the canvas, the everything bundle within the canvas, the axes (given scale functions), and the axes labels
-start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height){
+start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selector){
 
-  var canvas = d3.select(element)
+  console.log(canvasHeight,height)
+  var canvas = d3.select(selector)
                 .append('svg')
                 .attr('height',canvasHeight)
                 .attr('width', canvasWidth);
 
   var everything = canvas.append('g');
 
-  everything.attr('transform','translate('+(width * 0.2)+','+(height * 0.1)+')');
-
-  var xLabel = everything.append('text')
-              .attr('x',canvasWidth*0.4)
-              .attr('y',canvasHeight*0.875)
-              .text(xLab)
-              .attr('text-anchor','middle');
-
-  var yLabel = everything.append('text')
-              .attr('x', -canvasHeight*0.4)
-              .attr('y', -canvasWidth*0.1)
-              .attr('transform','rotate(-90)')
-              .text(yLab)
-              .attr('text-anchor','middle');
+  everything.attr('transform','translate('+(width * 0.2)+','+height*0.1+')');
 
   var xAxis = d3.svg.axis()
               .scale(xMap);
@@ -37,6 +25,18 @@ start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height){
   everything.append('g')
         .call(yAxis);
 
+  var xLabel = everything.append('text')
+              .attr('x',canvasWidth*0.4)
+              .attr('y',height+45)
+              .text(xLab)
+              .attr('text-anchor','middle');
+
+  var yLabel = everything.append('text')
+              .attr('x', -canvasHeight*0.4)
+              .attr('y', -canvasWidth*0.1)
+              .attr('transform','rotate(-90)')
+              .text(yLab)
+              .attr('text-anchor','middle');
 
   var objects = [canvas,everything];
   return objects;
@@ -46,15 +46,18 @@ start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height){
 
 
 // HISTO FUNCTION: creats histogram plot
-histo = function(data,xLab,element,canvasWidth,canvasHeight){
+histo = function(data,config){
+  if (typeof config === 'undefined'){config = {}};
+  var xLab=config.xLab,selector=config.selector,canvasWidth=config.width,canvasHeight=config.height;
+
   if(typeof canvasWidth === 'undefined'){
     canvasWidth = 500;
   }
   if(typeof canvasHeight === 'undefined'){
     canvasHeight = 500;
   }
-  if(typeof element === 'undefined'){
-    element = 'body';
+  if(typeof selector === 'undefined'){
+    selector = 'body';
   }
   if(typeof xLab === 'undefined'){
     xLab = '';
@@ -102,6 +105,7 @@ histo = function(data,xLab,element,canvasWidth,canvasHeight){
 
   var height = canvasHeight/1.3;
   var width = canvasWidth/1.3;
+  if (canvasHeight - height < 75){height -= 45};
 
   var allData = hist(data);
 
@@ -115,7 +119,7 @@ histo = function(data,xLab,element,canvasWidth,canvasHeight){
                   .domain([maxfreq,0])
                   .range([0,height]);
 
-  var objects = start(xLab,'Frequency',xMap,yMap,canvasWidth,canvasHeight,width,height);
+  var objects = start(xLab,'Frequency',xMap,yMap,canvasWidth,canvasHeight,width,height,selector);
 
   var canvas = objects[0];
   var everything = objects[1];
@@ -127,7 +131,7 @@ histo = function(data,xLab,element,canvasWidth,canvasHeight){
   for (var i=0;i<keys.length;i++){
       arr.push(obj[keys[i]]);
   }
-  var binSize = xMap(allData[3]);
+  var binSize = xMap(allData[3]) - xMap(Math.abs(allData[1]))/2;
 
   everything.selectAll('rect')
         .data(arr)
@@ -152,7 +156,9 @@ histo = function(data,xLab,element,canvasWidth,canvasHeight){
 // END OF HIST FUNCTION
 
 // BEGINNING OF XY PLOT FUNCTION
-xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
+xyPlot = function(x,y,config){
+  if (typeof config === 'undefined'){config = {}};
+  var xLab=config.xLab,yLab=config.yLab,selector=config.selector,canvasWidth=config.width,canvasHeight=config.height;
 
   if(typeof canvasWidth === 'undefined'){
     canvasWidth = 500;
@@ -160,8 +166,8 @@ xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
   if(typeof canvasHeight === 'undefined'){
     canvasHeight = 500;
   }
-  if(typeof element === 'undefined'){
-    element = 'body';
+  if(typeof selector === 'undefined'){
+    selector = 'body';
   }
 
   var xSort = x.slice().sort(function(a,b){
@@ -177,6 +183,7 @@ xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
 
   var height = canvasHeight/1.3;
   var width = canvasWidth/1.3;
+  if (canvasHeight - height < 75){height -= 45};
 
   if (typeof x[0] !== 'number'){
     if (typeof Date.parse(x[0]) === 'number'){
@@ -203,7 +210,7 @@ xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
                   .domain([yMax,yMin])
                   .range([0,height]);
 
-  var objects = start(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height);
+  var objects = start(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selector);
 
   var canvas = objects[0];
   var everything = objects[1];
@@ -222,15 +229,19 @@ xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
 
 };
 
-scatter = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight,z,zLab){
+// START OF SCATTER FUNCTION
+scatter = function(x,y,config){
+  if (typeof config === 'undefined'){config = {}};
+  var xLab=config.xLab,yLab=config.yLab,selector=config.selector,canvasWidth=config.width,canvasHeight=config.height,z=config.z,zLab=config.zLab;
+
   if(typeof canvasWidth === 'undefined'){
     canvasWidth = 500;
   }
   if(typeof canvasHeight === 'undefined'){
     canvasHeight = 500;
   }
-  if(typeof element === 'undefined'){
-    element = 'body';
+  if(typeof selector === 'undefined'){
+    selector = 'body';
   }
 
   var xSort = x.slice().sort(function(a,b){
@@ -252,6 +263,7 @@ scatter = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight,z,zLab){
 
   var height = canvasHeight/1.3;
   var width = canvasWidth/1.3;
+  if (canvasHeight - height < 75){height -= 45};
 
   if (typeof x[0] !== 'number'){
     if (typeof Date.parse(x[0]) === 'number'){
@@ -278,9 +290,8 @@ scatter = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight,z,zLab){
                   .domain([yMax,yMin])
                   .range([0,height]);
 
-// start here?
   if (typeof zLab !== 'undefined'){yLab = yLab+' ('+zLab+')'};
-  var objects = start(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height);
+  var objects = start(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selector);
 
   var canvas = objects[0];
   var everything = objects[1];
@@ -298,9 +309,8 @@ scatter = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight,z,zLab){
               })
               .attr('cx',xMap(x[index]))
               .attr('cy',yMap(y[index]))
-              .attr('fill','none')
-              .attr('stroke','black')
-              .attr('stroke-width',1)
+              .attr('fill','steelBlue')
+              .attr('stroke-width',1);
   });
 
   return canvas;

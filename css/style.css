@@ -1,0 +1,8 @@
+svg path, svg line{
+  fill:none;
+  stroke:black;
+}
+svg text {
+  font-family: sans-serif;
+  font-size: 11px;
+}
