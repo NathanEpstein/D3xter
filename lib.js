@@ -1,10 +1,5 @@
-// DETERMINE ORDER OF ARGUMENTS
-// REFACTOR
-// things in every plot: canvas/canvas translation,labels,checks for args(??), axis creation (given scale functions)
-
-
 // START FUNCTION: This function creates the canvas, the everything bundle within the canvas, the axes (given scale functions), and the axes labels
-start = function(xLab,yLab,xMap,yMap,canvasHeight,canvasWidth,height,width){
+start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height){
 
   var canvas = d3.select(element)
                 .append('svg')
@@ -13,7 +8,7 @@ start = function(xLab,yLab,xMap,yMap,canvasHeight,canvasWidth,height,width){
 
   var everything = canvas.append('g');
 
-  everything.attr('transform','translate('+(width * 0.2)+','+(height * 0.05)+')');
+  everything.attr('transform','translate('+(width * 0.2)+','+(height * 0.1)+')');
 
   var xLabel = everything.append('text')
               .attr('x',canvasWidth*0.4)
@@ -61,9 +56,9 @@ histo = function(data,xLab,element,canvasWidth,canvasHeight){
   if(typeof element === 'undefined'){
     element = 'body';
   }
-
-  var height = canvasHeight/1.3;
-  var width = canvasWidth/1.3;
+  if(typeof xLab === 'undefined'){
+    xLab = '';
+  }
 
   var hist = function(arr){
     var newArr = arr.slice().sort(function(a,b){
@@ -105,17 +100,10 @@ histo = function(data,xLab,element,canvasWidth,canvasHeight){
       return [obj,min,max,binSize];
   };
 
+  var height = canvasHeight/1.3;
+  var width = canvasWidth/1.3;
+
   var allData = hist(data);
-
-  var canvas = d3.select(element)
-              .append('svg')
-              .attr('height',canvasHeight)
-              .attr('width', canvasWidth);
-
-
-  var everything = canvas.append('g');
-
-  everything.attr('transform','translate('+(width * 0.2)+','+(height * 0.05)+')');
 
   var xMap = d3.scale.linear()
                   .domain([allData[1],allData[2]])
@@ -127,33 +115,10 @@ histo = function(data,xLab,element,canvasWidth,canvasHeight){
                   .domain([maxfreq,0])
                   .range([0,height]);
 
-  var xAxis = d3.svg.axis()
-              .scale(xMap);
+  var objects = start(xLab,'Frequency',xMap,yMap,canvasWidth,canvasHeight,width,height);
 
-  var yAxis = d3.svg.axis()
-              .scale(yMap)
-              .orient('left');
-
-  var xLabel = everything.append('text')
-              .text(xLab)
-              .attr('text-anchor','middle')
-              .attr('x',canvasWidth*0.4)
-              .attr('y',canvasHeight*0.875);
-
-  var yLabel = everything.append('text')
-              .attr('y', -canvasWidth*0.1)
-              .attr('x', -canvasHeight*0.4)
-              .attr('transform','rotate(-90)')
-              .text('Frequency')
-              .attr('text-anchor','middle');
-
-
-  everything.append('g')
-        .attr('transform','translate(0,'+height+')')
-        .call(xAxis);
-
-  everything.append('g')
-        .call(yAxis);
+  var canvas = objects[0];
+  var everything = objects[1];
 
   //MAKE AN ARRAY OF THE DATA TO BIND
   var obj = allData[0];
@@ -182,10 +147,9 @@ histo = function(data,xLab,element,canvasWidth,canvasHeight){
         .attr('width', binSize)
         .style('fill', 'steelBlue');
 
-
-
   return canvas;
 };
+// END OF HIST FUNCTION
 
 // BEGINNING OF XY PLOT FUNCTION
 xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
@@ -199,22 +163,6 @@ xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
   if(typeof element === 'undefined'){
     element = 'body';
   }
-  if(typeof y === 'undefined'){
-    y = [];
-  }
-  if(typeof x === 'undefined'){
-    x = [];
-  }
-  var height = canvasHeight/1.3;
-  var width = canvasWidth/1.3;
-
-
-  var canvas = d3.select(element)
-              .append('svg')
-              .attr('height',canvasHeight)
-              .attr('width', canvasWidth);
-
-  var everything = canvas.append('g');
 
   var xSort = x.slice().sort(function(a,b){
       return a-b;
@@ -226,18 +174,9 @@ xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
   var yMax = ySort[ySort.length-1];
   var yMin = ySort[0];
 
-  var xLabel = everything.append('text')
-              .text(xLab)
-              .attr('text-anchor','middle')
-              .attr('x',canvasWidth*0.4)
-              .attr('y',canvasHeight*0.875);
 
-  var yLabel = everything.append('text')
-              .attr('y', -canvasWidth*0.1)
-              .attr('x', -canvasHeight*0.4)
-              .attr('transform','rotate(-90)')
-              .text(yLab)
-              .attr('text-anchor','middle');
+  var height = canvasHeight/1.3;
+  var width = canvasWidth/1.3;
 
   if (typeof x[0] !== 'number'){
     if (typeof Date.parse(x[0]) === 'number'){
@@ -264,20 +203,10 @@ xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
                   .domain([yMax,yMin])
                   .range([0,height]);
 
-  var xAxis = d3.svg.axis()
-              .scale(xMap);
+  var objects = start(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height);
 
-  var yAxis = d3.svg.axis()
-              .scale(yMap)
-              .orient('left');
-
-  everything.append('g')
-        .attr('transform','translate(0,'+height+')')
-        .call(xAxis);
-
-  everything.append('g')
-        .call(yAxis);
-
+  var canvas = objects[0];
+  var everything = objects[1];
 
   for (var i=1;i<x.length;i++){
     everything.append('line')
@@ -289,13 +218,11 @@ xyPlot = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight){
               .attr('y2',yMap(y[i]));
   }
 
-  everything.attr('transform','translate('+(width*0.2)+','+(height * 0.05)+')');
-
   return canvas;
 
 };
 
-scatter = function(element,canvasWidth,canvasHeight,x,y,z,xLab,yLab,zLab){
+scatter = function(x,y,xLab,yLab,element,canvasWidth,canvasHeight,z,zLab){
   if(typeof canvasWidth === 'undefined'){
     canvasWidth = 500;
   }
@@ -305,34 +232,6 @@ scatter = function(element,canvasWidth,canvasHeight,x,y,z,xLab,yLab,zLab){
   if(typeof element === 'undefined'){
     element = 'body';
   }
-  if(typeof y === 'undefined'){
-    y = [];
-  }
-  if(typeof x === 'undefined'){
-    x = [];
-  }
-  var height = canvasHeight/1.3;
-  var width = canvasWidth/1.3;
-
-  var canvas = d3.select(element)
-              .append('svg')
-              .attr('height',canvasHeight)
-              .attr('width', canvasWidth);
-
-  var everything = canvas.append('g');
-
-  var xLabel = everything.append('text')
-              .text(xLab)
-              .attr('text-anchor','middle')
-              .attr('x',canvasWidth*0.4)
-              .attr('y',canvasHeight*0.875);
-
-  var yLabel = everything.append('text')
-              .attr('y', -canvasWidth*0.1)
-              .attr('x', -canvasHeight*0.4)
-              .attr('transform','rotate(-90)')
-              .text(yLab+' ('+zLab+')')
-              .attr('text-anchor','middle');
 
   var xSort = x.slice().sort(function(a,b){
         return a-b;
@@ -351,6 +250,9 @@ scatter = function(element,canvasWidth,canvasHeight,x,y,z,xLab,yLab,zLab){
   var yMax = ySort[ySort.length-1];
   var yMin = ySort[0];
 
+  var height = canvasHeight/1.3;
+  var width = canvasWidth/1.3;
+
   if (typeof x[0] !== 'number'){
     if (typeof Date.parse(x[0]) === 'number'){
       // if we're here, x[0] is a date
@@ -376,19 +278,13 @@ scatter = function(element,canvasWidth,canvasHeight,x,y,z,xLab,yLab,zLab){
                   .domain([yMax,yMin])
                   .range([0,height]);
 
-  var xAxis = d3.svg.axis()
-              .scale(xMap);
+// start here?
+  if (typeof zLab !== 'undefined'){yLab = yLab+' ('+zLab+')'};
+  var objects = start(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height);
 
-  var yAxis = d3.svg.axis()
-              .scale(yMap)
-              .orient('left');
+  var canvas = objects[0];
+  var everything = objects[1];
 
-  everything.append('g')
-        .attr('transform','translate(0,'+height+')')
-        .call(xAxis);
-
-  everything.append('g')
-        .call(yAxis);
 
   x.forEach(function(elem,index){
     everything.append('circle')
@@ -397,7 +293,7 @@ scatter = function(element,canvasWidth,canvasHeight,x,y,z,xLab,yLab,zLab){
                   return height*width*(0.000025);
                 }
                 else{
-                  return (z[index]/zSort[zSort.length-1])*height*width*(0.0002)
+                  return (height*width*0.000025 + (z[index]-zSort[0])*(height*width*(0.0001))/(zSort[zSort.length-1] - zSort[0]));
                 }
               })
               .attr('cx',xMap(x[index]))
@@ -406,8 +302,6 @@ scatter = function(element,canvasWidth,canvasHeight,x,y,z,xLab,yLab,zLab){
               .attr('stroke','black')
               .attr('stroke-width',1)
   });
-
-  everything.attr('transform','translate('+(width*0.2)+','+(height * 0.1)+')');
 
   return canvas;
 
