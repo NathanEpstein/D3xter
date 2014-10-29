@@ -1,10 +1,6 @@
-// histo bin width is still not working right for arrays with smaller values
-
-
 // START FUNCTION: This function creates the canvas, the everything bundle within the canvas, the axes (given scale functions), and the axes labels
 start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selector){
 
-  console.log(canvasHeight,height)
   var canvas = d3.select(selector)
                 .append('svg')
                 .attr('height',canvasHeight)
@@ -134,24 +130,26 @@ histo = function(data,config){
   for (var i=0;i<keys.length;i++){
       arr.push(obj[keys[i]]);
   }
-  var binSize = xMap(allData[3]) - xMap(Math.abs(allData[1]))/2;
+
+  // obj,min,max,binSize
+  var binSize = xMap(allData[3] + allData[1]);
+  var padding = binSize * 0.075;
+  //padding used to create a buffer around each bin
 
   everything.selectAll('rect')
         .data(arr)
         .enter()
         .append('rect')
         .attr('x', function(d,index){
-          // 1.5 pixel translation to the right
-          return (index*binSize + 1.5);
+          return (index*binSize + padding/2);
         })
         .attr('y', function(d){
-          // 1 pixel translation upward
-          return yMap(d) - 1.0;
+          return yMap(d);
         })
         .attr('height', function(d){
           return Math.max(yMap(maxfreq - d) - 0.5, 0);
         })
-        .attr('width', binSize)
+        .attr('width', binSize-padding)
         .style('fill', 'steelBlue');
 
   return canvas;
@@ -235,7 +233,7 @@ xyPlot = function(x,y,config){
 // START OF SCATTER FUNCTION
 scatter = function(x,y,config){
   if (typeof config === 'undefined'){config = {}};
-  var xLab=config.xLab,yLab=config.yLab,selector=config.selector,canvasWidth=config.width,canvasHeight=config.height,z=config.z,zLab=config.zLab;
+  var xLab=config.xLab,yLab=config.yLab,selector=config.selector,canvasWidth=config.width,canvasHeight=config.height,z=config.size,zLab=config.sizeLab;
 
   if(typeof canvasWidth === 'undefined'){
     canvasWidth = 500;
@@ -304,7 +302,7 @@ scatter = function(x,y,config){
     everything.append('circle')
               .attr('r',function(){
                 if (typeof z === 'undefined'){
-                  return height*width*(0.000025);
+                  return height*width*(0.00002);
                 }
                 else{
                   return (height*width*0.000025 + (z[index]-zSort[0])*(height*width*(0.0001))/(zSort[zSort.length-1] - zSort[0]));
@@ -312,8 +310,26 @@ scatter = function(x,y,config){
               })
               .attr('cx',xMap(x[index]))
               .attr('cy',yMap(y[index]))
-              .attr('fill','steelBlue')
-              .attr('stroke-width',1);
+              .attr('opacity',function(){
+                if (typeof z === 'undefined'){
+                  return 1;
+                }
+                else{
+                  return 0.3;
+                }
+              })
+              .attr('fill',function(){
+                if (typeof z === 'undefined'){
+                  return 'none';
+                }
+                else{
+                  return 'steelBlue';
+                }
+              })
+              .attr('stroke', function(){
+                if (typeof z === 'undefined'){return'black'};
+                return 'none'
+              });
   });
 
   return canvas;
