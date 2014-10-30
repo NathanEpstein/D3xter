@@ -87,7 +87,19 @@ var lineGraph = xyPlot(x,y,config);
 
 ```
 
+## Extended Usage with D3
 
+Functions in D3xter are intended to extend (rather than replaceme) D3. **D3xter functions return SVG objects** which can be modified with regular D3 code.
+
+```javascript
+var array = [1,2,3,4];
+
+var hist = histo(array);
+
+//modify the color of the histogram rectangles with D3 syntax
+hist.selectAll('rect').style('fill','red');
+
+```
 
 
 
