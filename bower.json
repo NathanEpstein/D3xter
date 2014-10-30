@@ -1,6 +1,6 @@
 {
   "name": "d3xter",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "homepage": "https://github.com/NathanEpstein/D3xter",
   "authors": [
     "Nathan Epstein (ne2210@columbia.edu)"
@@ -18,7 +18,6 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
-    "bower.json"
     "node_modules",
     "bower_components",
     "test",
