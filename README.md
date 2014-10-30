@@ -13,11 +13,11 @@ Generate common charts with extremely simple functions. Functions return SVG obj
 Note: D3.js is a dependency, must run `bower install d3`
 
 ## Usage
-Why use D3xter? **Because configuration is optional, charts with sensible defaults can be generated with a single line**
+Why use D3xter? **Because configuration is optional, charts with sensible defaults can be generated with a single line.**
 
 Functions take the data to plot and an optional configuration object.
 
-###Basic Examples/Usage
+###Basic Examples (no configuration)
 ```javascript
 var x = [1,2,3,4,5,6,7,8];
 var y = [-1,-2,-3,-4,1,2,3,4];
@@ -72,6 +72,19 @@ var scatter = scatter(x,y,config);
 Create a standard x-y line graph (like the bottom left example).
 
 ```javascript
+var config = {
+  xLab: 'Time', //x-axis label (defaults to '')
+  yLab: 'Geometric Brownian Motion', //y-axis label (defaults to '')
+  selector: '#elementID', //Selector for DOM element to append the plot to (defaults to < body >)
+  width: 500, //pixel width (defaults to 500)
+  height: 500 //pixel height (defaults to 500)
+}
+
+var x = [1,2,3,4,5];
+var y = [2,4,6,8,10];
+
+var lineGraph = xyPlot(x,y,config);
+
 ```
 
 
