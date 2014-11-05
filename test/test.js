@@ -42,7 +42,7 @@ describe('xyPlot', function(){
 
   it('should have the correct number of line segments', function(){
     expect(p.selectAll('line')[0].length - p.selectAll('.tick')[0].length ).to.equal(x.length - 1);
-  }) //gotta fix this first test...
+  })
 
   it('should have the correct height',function(){
     expect(Number(p[0][0].attributes.height.value)).to.equal(710);
