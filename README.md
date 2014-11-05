@@ -6,11 +6,9 @@ D3xter
 
 Generate common charts with extremely simple functions. Functions return SVG objects which can be customized as needed using D3.js syntax.
 
-Note: D3.js is a dependency, must run `bower install d3`
-
 ## Install
 
-`bower install D3xter --save`
+`bower install d3xter --save`
 
 ## Usage
 Why use D3xter? Because configuration is optional, **charts with sensible defaults can be generated with a single line.**

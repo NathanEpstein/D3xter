@@ -24,6 +24,12 @@
     "tests"
   ],
   "dependencies": {
-    "d3": "~3.4.13"
+    "d3": "~3.4.13",
+    "mocha": "~2.0.1",
+    "assert": "https://github.com/Jxck/assert",
+    "chai": "~1.9.2"
+  },
+  "devDependencies": {
+    "mocha": "~2.0.1"
   }
 }
