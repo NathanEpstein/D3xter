@@ -16,13 +16,6 @@
     "Bubbleplot"
   ],
   "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ],
   "dependencies": {
     "d3": "~3.4.13",
     "mocha": "~2.0.1",
