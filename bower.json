@@ -9,6 +9,7 @@
   "main": "js/lib.js",
   "keywords": [
     "D3",
+    "Plotting",
     "Chart",
     "Histogram",
     "Scatterplot",
