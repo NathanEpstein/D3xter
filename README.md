@@ -11,7 +11,7 @@ Generate common charts with extremely simple functions. Functions return SVG obj
 `bower install d3xter --save`
 
 ## Usage
-Why use D3xter? Because configuration is optional, **charts with sensible defaults can be generated with as little as a single line.** Configuration options and
+Why use D3xter? Because configuration is optional, **charts with sensible defaults can be generated with as little as a single line.**
 
 Functions take the data to plot and an optional configuration object.
 
