@@ -8,7 +8,7 @@ Generate common charts with extremely simple functions. Functions return SVG obj
 
 ## Install
 
-`bower install d3xter --save`
+`bower install d3xter`
 
 ## Usage
 Why use D3xter? Because configuration is optional, **charts with sensible defaults can be generated with as little as a single line.**
