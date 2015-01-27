@@ -43,6 +43,81 @@ start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selec
 }
 // END OF START FUNCTION
 
+pie = function(data,config){
+  if (typeof config.selector === 'undefined'){
+    var selector = 'body';
+  }
+  else{
+    var selector = config.selector;
+  }
+  if (typeof config.height === 'undefined'){
+    var canvasHeight = 500;
+  }
+  else{
+    var canvasHeight = config.height;
+  }
+  if (typeof config.width === 'undefined'){
+    var canvasWidth = 500;
+  }
+  else{
+    var canvasWidth = config.width;
+  }
+  canvas = d3.select(selector).append('svg')
+          .attr('height',canvasHeight)
+          .attr('width',canvasWidth);
+  var height = canvasHeight;
+  var width = canvasWidth;
+  var radius = Math.min(width,height)/2;
+
+  var arc = d3.svg.arc()
+    .outerRadius(radius - 10)
+    .innerRadius(0);
+
+  // set colors
+  var colors;
+  if (data.length <= 10){
+    colors = d3.scale.category10().range();
+  }
+  else if (data.length <= 20){
+    colors = d3.scale.category20().range();
+  }
+  else if (data.length <= 40){
+    colors = d3.scale.category20().range().concat(d3.scale.category20b().range());
+  }
+  else if (data.length <= 60){
+    colors = d3.scale.category20().range().concat(d3.scale.category20b().range()).concat(d3.scale.category20c().range());
+  }
+  else{
+    //if pie chart has more than 60 colors, return blank canvas
+    return canvas;
+  }
+
+  var pie = d3.layout.pie()
+    .sort(null)
+    .value(function(d) { return d; });
+
+  var g = canvas.selectAll(".arc")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc");
+
+  g.append("path")
+      .attr("d", arc)
+      .style("fill", function(d,i) { return colors[i]; });
+
+  g.append("text")
+      .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+      .attr("dy", ".35em")
+      .style("text-anchor", "middle")
+      .text(function(d,i) { return config.labels[i]; });
+
+  // g.attr('transform','translate('+canvasWidth+'/2,'+canvasHeight+'/2)');
+  g.attr("transform", "translate(" + canvasWidth / 2 + "," + canvasHeight / 2 + ")");
+
+
+  return canvas;
+};
+
 
 // HISTO FUNCTION: creats histogram plot
 histo = function(data,config){
