@@ -32,7 +32,6 @@ Functions take the data to plot and an optional configuration object.
         index.push(i);
       })
 
-
       var histogram = histo(x);
       var lineGraph = xyPlot(index,y);
       var scatterPlot = scatter(x,y);
@@ -44,6 +43,33 @@ Functions take the data to plot and an optional configuration object.
 
 ## Further Examples/Extended Usage Notes
 
+### Pie
+Creates a pie chart from an array of data.
+
+```html
+<html>
+  <head>
+    <script src="bower_components/d3/d3.js" charset="utf-8"></script>
+    <script src="bower_components/d3xter/js/lib.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="bower_components/d3xter/css/style.css">
+  </head>
+  <body>
+    <div id='elementID'></div>
+    <script type="text/javascript">
+      var config = {
+        selector: '#elementID', //selector for DOM element to append the plot to (defaults to < body >)
+        width: 500, //pixel width (defaults to 500)
+        height: 500, //pixel height (defaults to 500)
+        labels: ["A","B","C","D"] //labels for the pie chart slices
+      }
+      var data = [12,32,23,13]; //array of numeric values
+
+      var pieChart = pie(data, config);
+
+    </script>
+  </body>
+</html>
+```
 ### Histogram
 Creates a histogram from an array of data (like the top-left example).
 
