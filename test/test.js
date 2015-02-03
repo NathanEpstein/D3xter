@@ -1,5 +1,23 @@
 var expect = chai.expect;
 
+describe('pie', function(){
+  var data = [2,4,7,12,23];
+  var config = {height:400, width:300,labels:["one","two","three","four","five"]};
+  var p = pie(data,config);
+
+  it('should have the correct number of slices',function(){
+    var slices = p.selectAll('path')[0].length;
+    expect(slices).to.equal(5);
+  })
+  it('should have the correct height',function(){
+    expect(Number(p[0][0].attributes.height.value)).to.equal(400);
+  })
+  it('should have the correct width',function(){
+    expect(Number(p[0][0].attributes.width.value)).to.equal(300);
+  })
+  p.remove();
+})
+
 describe('histo', function(){
   var data = [-12,32,43,12,43,25,34,76,78];
   var config = {height:400, width: 700, xLab: 'Testing'}

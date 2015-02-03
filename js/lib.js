@@ -103,7 +103,7 @@ pie = function(data,config){
 
   var g = canvas.selectAll(".arc")
       .data(pie(data))
-    .enter().append("g")
+      .enter().append("g")
       .attr("class", "arc");
 
   g.append("path")
@@ -116,8 +116,7 @@ pie = function(data,config){
       .style("text-anchor", "middle")
       .text(function(d,i) { return config.labels[i]; });
 
-  // g.attr('transform','translate('+width+'/2,'+height+'/2)');
-  // g.remove();
+
   g.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
 

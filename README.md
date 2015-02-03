@@ -48,7 +48,7 @@ Functions take the data to plot and an optional configuration object.
 ## Further Examples/Extended Usage Notes
 
 ### Pie
-Creates a pie chart from an array of data.
+Creates a pie chart from an array of data (like the bottom-left example).
 
 ```html
 <html>
@@ -103,7 +103,7 @@ Creates a histogram from an array of data (like the top-left example).
 ```
 
 ### Scatter Plot
-Create a standard x-y scatter plot (like the bottom-right example), or specify an additional array of values to map to the size of the circles (like the top-right example)
+Create a standard x-y scatter plot, or specify an additional array of values to map to the size of the circles (like the top-right example)
 
 ```html
 <html>
