@@ -44,6 +44,9 @@ start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selec
 // END OF START FUNCTION
 
 pie = function(data,config){
+  if (typeof config === 'undefined'){
+    var config = {};
+  }
   if (typeof config.selector === 'undefined'){
     var selector = 'body';
   }
@@ -51,22 +54,24 @@ pie = function(data,config){
     var selector = config.selector;
   }
   if (typeof config.height === 'undefined'){
-    var canvasHeight = 500;
+    var height = 500;
   }
   else{
-    var canvasHeight = config.height;
+    var height = config.height;
   }
   if (typeof config.width === 'undefined'){
-    var canvasWidth = 500;
+    var width = 500;
   }
   else{
-    var canvasWidth = config.width;
+    var width = config.width;
+  }
+  if (typeof config.labels === 'undefined'){
+    config.labels = data;
   }
   canvas = d3.select(selector).append('svg')
-          .attr('height',canvasHeight)
-          .attr('width',canvasWidth);
-  var height = canvasHeight;
-  var width = canvasWidth;
+          .attr('height',height)
+          .attr('width',width);
+
   var radius = Math.min(width,height)/2;
 
   var arc = d3.svg.arc()
@@ -111,8 +116,9 @@ pie = function(data,config){
       .style("text-anchor", "middle")
       .text(function(d,i) { return config.labels[i]; });
 
-  // g.attr('transform','translate('+canvasWidth+'/2,'+canvasHeight+'/2)');
-  g.attr("transform", "translate(" + canvasWidth / 2 + "," + canvasHeight / 2 + ")");
+  // g.attr('transform','translate('+width+'/2,'+height+'/2)');
+  // g.remove();
+  g.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
 
   return canvas;
