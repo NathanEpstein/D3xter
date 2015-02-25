@@ -1,21 +1,44 @@
 var expect = chai.expect;
 
 describe('pie', function(){
-  var data = [2,4,7,12,23];
-  var config = {height:400, width:300,labels:["one","two","three","four","five"]};
-  var p = pie(data,config);
+  describe("with a defined config object", function() {
+    var data = [2,4,7,12,23];
+    var config = {height:400, width:300,labels:["one","two","three","four","five"]};
+    var p = pie(data,config);
 
-  it('should have the correct number of slices',function(){
-    var slices = p.selectAll('path')[0].length;
-    expect(slices).to.equal(5);
+    it('should have the correct number of slices',function(){
+      var slices = p.selectAll('path')[0].length;
+      expect(slices).to.equal(5);
+    })
+    it('should have the correct height',function(){
+      expect(Number(p[0][0].attributes.height.value)).to.equal(400);
+    })
+    it('should have the correct width',function(){
+      expect(Number(p[0][0].attributes.width.value)).to.equal(300);
+    })
+    p.remove();
   })
-  it('should have the correct height',function(){
-    expect(Number(p[0][0].attributes.height.value)).to.equal(400);
+
+  describe('without a defined config object', function() {
+    var p
+
+    beforeEach(function() {
+      var data = [2,4,7,12,23];
+      p = pie(data);
+    })
+
+    afterEach(function() {
+      p.remove()
+    })
+
+    it('should have a width of 500', function() {
+      expect(Number(p[0][0].attributes.width.value)).to.equal(500)
+    })
+
+    it('should have a height of 500', function() {
+      expect(Number(p[0][0].attributes.width.value)).to.equal(500)
+    })
   })
-  it('should have the correct width',function(){
-    expect(Number(p[0][0].attributes.width.value)).to.equal(300);
-  })
-  p.remove();
 })
 
 describe('histo', function(){
