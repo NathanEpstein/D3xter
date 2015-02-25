@@ -44,31 +44,12 @@ start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selec
 // END OF START FUNCTION
 
 pie = function(data,config){
-  if (typeof config === 'undefined'){
-    var config = {};
-  }
-  if (typeof config.selector === 'undefined'){
-    var selector = 'body';
-  }
-  else{
-    var selector = config.selector;
-  }
-  if (typeof config.height === 'undefined'){
-    var height = 500;
-  }
-  else{
-    var height = config.height;
-  }
-  if (typeof config.width === 'undefined'){
-    var width = 500;
-  }
-  else{
-    var width = config.width;
-  }
-  if (typeof config.labels === 'undefined'){
-    config.labels = data;
-  }
-  canvas = d3.select(selector).append('svg')
+  config = config || {};
+  config.labels = config.labels || data;
+  var selector = config.selector || 'body',
+      height = config.height || 500,
+      width = config.width || 500;
+      canvas = d3.select(selector).append('svg')
           .attr('height',height)
           .attr('width',width);
 
