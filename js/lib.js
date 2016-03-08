@@ -1,5 +1,6 @@
 function D3xter(config) {
   var self = this;
+  var config = config || {};
 
   var height = config.height || 500,
       width = config.width || 500;
@@ -45,7 +46,7 @@ function D3xter(config) {
   };
 
   function buildYMap(datasets) {
-    var values = datasets.map(function(d) { return d.y }).reduce(function(a, b) { return a.concat(b) });
+    var values = datasets.map(function(d) { return d.y }).reduce(function(a, b) { return a.concat(b) }, []);
 
     var yDomain = getBoundaries(values);
     self.yMap = d3.scale.linear()
@@ -56,6 +57,26 @@ function D3xter(config) {
                 ]);
   };
 
+  function buildZMap(datasets) {
+    var basePointSize = 3;
+    var values = datasets.map(function(d) { return d.z })
+                .reduce(function(a, b) { return a.concat(b) }, [])
+                .filter(function(a) { return (typeof a !== 'undefined') });
+
+    if (values.length == 0) {
+      self.zMap = function() {
+        return basePointSize;
+      };
+    }
+    else {
+      var zDomain = getBoundaries(values);
+      self.zMap = function(value) {
+        sizeBonus = 9 * (value - zDomain[0]) / (zDomain[1] - zDomain[0]);
+        return basePointSize * (1 + sizeBonus);
+      };
+    };
+  };
+
   function buildAxes() {
     var xAxis = d3.svg.axis()
                 .scale(self.xMap);
@@ -64,23 +85,23 @@ function D3xter(config) {
                 .scale(self.yMap)
                 .orient('left');
 
-    self.cavas.append('g')
-          .attr('transform','translate(0,' + height - margin.bottom + ')')
+    self.canvas.append('g')
+          .attr('transform','translate(0,' + (height - margin.bottom) + ')')
           .call(xAxis);
 
-    self.cavas.append('g')
+    self.canvas.append('g')
           .attr('transform','translate(' + margin.left + ', 0)')
           .call(yAxis);
   };
 
   function buildAxisLabels() {
-    var xLabel = self.buffer.append('text')
+    var xLabel = self.canvas.append('text')
                 .attr('x', width / 2)
                 .attr('y', height + margin.bottom / 2)
                 .text(config.xLab)
                 .attr('text-anchor','middle');
 
-    var yLabel = self.buffer.append('text')
+    var yLabel = self.canvas.append('text')
                 .attr('x', height / 2)
                 .attr('y', margin.left / 2)
                 .attr('transform','rotate(90)')
@@ -92,6 +113,7 @@ function D3xter(config) {
     buildCanvas();
     buildXMap(datasets);
     buildYMap(datasets);
+    buildZMap(datasets);
     buildAxes();
     buildAxisLabels();
   };
@@ -112,4 +134,29 @@ function D3xter(config) {
     });
     return uniques;
   };
+
+  function plotDataSet(dataset) {
+    for (var i = 0; i < dataset.x.length; i++) {
+      self.canvas.append('circle')
+          .attr('cx', self.xMap(dataset.x[i]))
+          .attr('cy', self.yMap(dataset.y[i]))
+          .attr('r', function() {
+            if (dataset.hasOwnProperty('z')) return self.zMap(dataset.z[i]);
+            return self.zMap();
+          })
+          .attr('opacity', 0.5)
+          .attr('fill', function() {
+            if (dataset.hasOwnProperty('colors')) return dataset.colors[i];
+            return 'steelBlue';
+          });
+    };
+  };
+
+  self.plot = function(datasets) {
+    build(datasets);
+    datasets.forEach(function(dataset) {
+      plotDataSet(dataset);
+    });
+  };
 };
+
