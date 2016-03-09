@@ -19,11 +19,6 @@ function D3xter(config) {
                   .attr('width', width);
   };
 
-  function buildMapping(datasets) {
-    buildXMap(datasets);
-    buildYMap(datasets);
-  };
-
   function buildXMap(datasets) {
     var values = datasets.map(function(d) { return d.x }).reduce(function(a, b) { return a.concat(b) });
     var ordinalValues = (typeof values[0] == 'string');
@@ -46,7 +41,9 @@ function D3xter(config) {
   };
 
   function buildYMap(datasets) {
-    var values = datasets.map(function(d) { return d.y }).reduce(function(a, b) { return a.concat(b) }, []);
+    var values = datasets.map(
+      function(d) { return d.y }
+    ).reduce(function(a, b) { return a.concat(b) }, []);
 
     var yDomain = getBoundaries(values);
     self.yMap = d3.scale.linear()
@@ -134,7 +131,7 @@ function D3xter(config) {
     return uniques;
   };
 
-  function plotDataSet(dataset) {
+  function plotPoints(dataset) {
     for (var i = 0; i < dataset.x.length; i++) {
       self.canvas.append('circle')
           .attr('cx', self.xMap(dataset.x[i]))
@@ -144,17 +141,46 @@ function D3xter(config) {
             return self.zMap();
           })
           .attr('opacity', 0.5)
-          .attr('fill', function() {
-            if (dataset.hasOwnProperty('colors')) return dataset.colors[i];
-            return 'steelBlue';
-          });
+          .attr('fill', dataset.color || 'steelBlue');
+    };
+  };
+
+  function plotLine(dataset) {
+    var color = dataset.color || 'black';
+    for (var i = 1; i < dataset.x.length; i++) {
+      self.canvas.append('line')
+          .attr('stroke-width', 1)
+          .attr('stroke', color)
+          .attr('x1', self.xMap(dataset.x[i - 1]))
+          .attr('x2', self.xMap(dataset.x[i]))
+          .attr('y1', self.yMap(dataset.y[i - 1]))
+          .attr('y2', self.yMap(dataset.y[i]));
+    };
+  };
+
+  function plotText(dataset) {
+    for (var i = 1; i < dataset.x.length; i++) {
+      self.canvas.append('text')
+          .attr('x', self.xMap(dataset.x[i]))
+          .attr('y', self.yMap(dataset.y[i]))
+          .text(dataset.labels[i])
+          .attr('text-anchor','middle')
+          .attr('stroke', dataset.color || 'black')
     };
   };
 
   self.plot = function(datasets) {
     build(datasets);
     datasets.forEach(function(dataset) {
-      plotDataSet(dataset);
+      if (dataset.hasOwnProperty('labels')) {
+        plotText(dataset);
+      }
+      else if (dataset.type == 'line') {
+        plotLine(dataset);
+      }
+      else {
+        plotPoints(dataset);
+      };
     });
   };
 

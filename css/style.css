@@ -1,8 +1,10 @@
-svg path, svg line{
-  fill:none;
-  stroke:black;
+svg .tick line, svg .domain {
+  fill: none;
+  stroke: black;
 }
+
 svg text {
   font-family: sans-serif;
   font-size: 11px;
+  stroke: none;
 }
