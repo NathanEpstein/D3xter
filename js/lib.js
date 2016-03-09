@@ -64,13 +64,12 @@ function D3xter(config) {
                 .filter(function(a) { return (typeof a !== 'undefined') });
 
     if (values.length == 0) {
-      self.zMap = function() {
-        return basePointSize;
-      };
+      self.zMap = function() { return basePointSize };
     }
     else {
       var zDomain = getBoundaries(values);
       self.zMap = function(value) {
+        if (typeof value === 'undefined') return basePointSize;
         sizeBonus = 9 * (value - zDomain[0]) / (zDomain[1] - zDomain[0]);
         return basePointSize * (1 + sizeBonus);
       };
@@ -96,17 +95,17 @@ function D3xter(config) {
 
   function buildAxisLabels() {
     var xLabel = self.canvas.append('text')
-                .attr('x', width / 2)
-                .attr('y', height + margin.bottom / 2)
+                .attr('x', (width + margin.left + margin.right) / 2)
+                .attr('y', height - margin.bottom / 2)
                 .text(config.xLab)
-                .attr('text-anchor','middle');
+                .attr('text-anchor', 'middle');
 
     var yLabel = self.canvas.append('text')
-                .attr('x', height / 2)
+                .attr('x', - height / 2)
                 .attr('y', margin.left / 2)
-                .attr('transform','rotate(90)')
+                .attr('transform', 'rotate(-90)')
                 .text(config.yLab)
-                .attr('text-anchor','middle');
+                .attr('text-anchor', 'middle');
   };
 
   function build(datasets) {
@@ -158,5 +157,7 @@ function D3xter(config) {
       plotDataSet(dataset);
     });
   };
+
+  return self;
 };
 
