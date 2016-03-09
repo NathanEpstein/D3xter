@@ -26,18 +26,15 @@ function D3xter(config) {
     if (ordinalValues) {
       var xDomain = getUniqueValues(values);
       self.xMap = d3.scale.ordinal()
+                  .domain(xDomain)
+                  .rangePoints([margin.left, width - margin.right]);
     }
     else {
       var xDomain = getBoundaries(values);
       self.xMap = d3.scale.linear()
+                  .domain(xDomain)
+                  .range([margin.left, width - margin.right]);
     };
-
-    self.xMap.domain(xDomain)
-        .range([
-          margin.left,
-          width - margin.right
-        ]);
-
   };
 
   function buildYMap(datasets) {
@@ -164,24 +161,62 @@ function D3xter(config) {
           .attr('x', self.xMap(dataset.x[i]))
           .attr('y', self.yMap(dataset.y[i]))
           .text(dataset.labels[i])
-          .attr('text-anchor','middle')
+          .attr('text-anchor', 'middle')
           .attr('stroke', dataset.color || 'black')
     };
   };
 
+  function buildBar(inputObj) {
+    build([
+      {
+        x: inputObj.labels.map(String),
+        y: inputObj.datasets
+                   .map(function(dataset) { return dataset.values })
+                   .reduce(function(a, b) { return a.concat(b) }, [])
+      }
+    ]);
+    // shift y axis to give left side clearance of bar width
+  };
+
   self.plot = function(datasets) {
     build(datasets);
+
     datasets.forEach(function(dataset) {
       if (dataset.hasOwnProperty('labels')) {
         plotText(dataset);
       }
-      else if (dataset.type == 'line') {
+      else if (dataset.line) {
         plotLine(dataset);
       }
       else {
         plotPoints(dataset);
       };
     });
+
+    return self;
+  };
+
+  function drawBarFunction(input) {
+    return function(label, index, value) {
+    // width and location of bars based on number of datasets
+      // get chart_width
+        // each category has cat_width = chart_width / input.labels.length
+        // within each category each bar has bar_width = chart_width / datasets.length
+    };
+  }
+
+  self.bar = function(input) {
+    buildBar(input);
+    var drawBar = drawBarFunction(input);
+
+    input.labels.forEach(function(label) {
+      input.datasets.forEach(function(dataset, index) {
+        dataset.values.forEach(function(value) {
+          drawBar(label, index, value);
+        });
+      });
+    });
+    return self;
   };
 
   return self;
