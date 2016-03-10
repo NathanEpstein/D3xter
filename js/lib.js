@@ -216,17 +216,14 @@ function D3xter(config) {
 
     var defaultColor = d3.scale.category10();
 
-    input.labels.forEach(function(label) {
-      input.datasets.forEach(function(dataset, index) {
-        dataset.values.forEach(function(value) {
-          self.canvas.append('rect')
-              .attr("width", self.innerXMap.rangeBand())
-              .attr("x", function(d) { return self.xMap(label) + self.innerXMap(index); })
-              .attr("y", function(d) { return self.yMap(value); })
-              .attr("height", function(d) { return height - self.yMap(value) - margin.bottom; })
-              .style("fill", dataset.color || defaultColor(index));
-
-        });
+    input.datasets.forEach(function(dataset, dataIndex) {
+      input.labels.forEach(function(label, labelIndex) {
+        self.canvas.append('rect')
+            .attr("width", self.innerXMap.rangeBand())
+            .attr("x", function(d) { return self.xMap(label) + self.innerXMap(dataIndex); })
+            .attr("y", function(d) { return self.yMap(dataset.values[labelIndex]); })
+            .attr("height", function(d) { return height - self.yMap(dataset.values[labelIndex]) - margin.bottom; })
+            .style("fill", dataset.color || defaultColor(dataIndex));
       });
     });
 
