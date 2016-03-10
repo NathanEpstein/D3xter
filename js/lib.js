@@ -45,10 +45,7 @@ function D3xter(config) {
     var yDomain = getBoundaries(values);
     self.yMap = d3.scale.linear()
                .domain(yDomain)
-               .range([
-                  height - margin.bottom,
-                  margin.top
-                ]);
+               .range([height - margin.bottom, margin.top]);
   };
 
   function buildZMap(datasets) {
@@ -102,7 +99,7 @@ function D3xter(config) {
                 .attr('text-anchor', 'middle');
   };
 
-  function build(datasets) {
+  function buildPlot(datasets) {
     buildCanvas();
     buildXMap(datasets);
     buildYMap(datasets);
@@ -166,20 +163,8 @@ function D3xter(config) {
     };
   };
 
-  function buildBar(inputObj) {
-    build([
-      {
-        x: inputObj.labels.map(String),
-        y: inputObj.datasets
-                   .map(function(dataset) { return dataset.values })
-                   .reduce(function(a, b) { return a.concat(b) }, [])
-      }
-    ]);
-    // shift y axis to give left side clearance of bar width
-  };
-
   self.plot = function(datasets) {
-    build(datasets);
+    buildPlot(datasets);
 
     datasets.forEach(function(dataset) {
       if (dataset.hasOwnProperty('labels')) {
@@ -196,26 +181,55 @@ function D3xter(config) {
     return self;
   };
 
-  function drawBarFunction(input) {
-    return function(label, index, value) {
-    // width and location of bars based on number of datasets
-      // get chart_width
-        // each category has cat_width = chart_width / input.labels.length
-        // within each category each bar has bar_width = chart_width / datasets.length
-    };
-  }
+
+  function buildBar(input) {
+    var structuredData = [
+      {
+        x: input.labels.map(String),
+        y: input.datasets
+                .map(function(dataset) { return dataset.values })
+                .reduce(function(a, b) { return a.concat(b) }, [])
+      }
+    ];
+
+    buildCanvas();
+    buildYMap(structuredData);
+    buildXMapBar(input);
+    buildAxes();
+    buildAxisLabels();
+  };
+
+  function buildXMapBar(input) {
+    var datasetIndexes = input.datasets.map(function(dataset, index) { return index });
+
+    self.xMap = d3.scale.ordinal()
+        .domain(input.labels)
+        .rangeRoundBands([margin.left, width - margin.right], .1);
+
+    self.innerXMap = d3.scale.ordinal()
+        .domain(datasetIndexes)
+        .rangeRoundBands([0, self.xMap.rangeBand()], .05);
+  };
 
   self.bar = function(input) {
     buildBar(input);
-    var drawBar = drawBarFunction(input);
+
+    var defaultColor = d3.scale.category10();
 
     input.labels.forEach(function(label) {
       input.datasets.forEach(function(dataset, index) {
         dataset.values.forEach(function(value) {
-          drawBar(label, index, value);
+          self.canvas.append('rect')
+              .attr("width", self.innerXMap.rangeBand())
+              .attr("x", function(d) { return self.xMap(label) + self.innerXMap(index); })
+              .attr("y", function(d) { return self.yMap(value); })
+              .attr("height", function(d) { return height - self.yMap(value) - margin.bottom; })
+              .style("fill", dataset.color || defaultColor(index));
+
         });
       });
     });
+
     return self;
   };
 
