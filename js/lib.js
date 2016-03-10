@@ -217,12 +217,12 @@ function D3xter(config) {
     var defaultColor = d3.scale.category10();
 
     input.datasets.forEach(function(dataset, dataIndex) {
-      input.labels.forEach(function(label, labelIndex) {
+      dataset.values.forEach(function(value, labelIndex) {
         self.canvas.append('rect')
             .attr("width", self.innerXMap.rangeBand())
-            .attr("x", function(d) { return self.xMap(label) + self.innerXMap(dataIndex); })
-            .attr("y", function(d) { return self.yMap(dataset.values[labelIndex]); })
-            .attr("height", function(d) { return height - self.yMap(dataset.values[labelIndex]) - margin.bottom; })
+            .attr("x", self.xMap(input.labels[labelIndex]) + self.innerXMap(dataIndex))
+            .attr("y", )
+            .attr("height", )
             .style("fill", dataset.color || defaultColor(dataIndex));
       });
     });
