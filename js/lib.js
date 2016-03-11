@@ -189,6 +189,7 @@ function D3xter(config) {
         y: input.datasets
                 .map(function(dataset) { return dataset.values })
                 .reduce(function(a, b) { return a.concat(b) }, [])
+                .concat([0])
       }
     ];
 
@@ -221,8 +222,8 @@ function D3xter(config) {
         self.canvas.append('rect')
             .attr("width", self.innerXMap.rangeBand())
             .attr("x", self.xMap(input.labels[labelIndex]) + self.innerXMap(dataIndex))
-            .attr("y", )
-            .attr("height", )
+            .attr("y", self.yMap(Math.max(value, 0)))
+            .attr("height", Math.abs(self.yMap(value) - self.yMap(0)))
             .style("fill", dataset.color || defaultColor(dataIndex));
       });
     });
