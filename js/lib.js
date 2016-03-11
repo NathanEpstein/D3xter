@@ -231,6 +231,49 @@ function D3xter(config) {
     return self;
   };
 
+  function bindex(bins, value) {
+    var bindex = 0;
+    while (true) {
+      if (bindex == bins.length - 1) return bindex;
+      if (value < bins[bindex + 1]) {
+        return bindex;
+      }
+      else {
+        bindex++;
+      };
+    };
+  };
+
+  function round2(num) {
+    return Math.round(num * 100) / 100;
+  };
+
+  function formatBinString(bin, binSize) {
+    return round2(bin) + ' to ' + round2(bin + binSize);
+  };
+
+  self.hist = function(dataset) {
+    var domain = getBoundaries(dataset),
+        min = domain[0],
+        max = domain[1],
+        binCount = Math.round(Math.sqrt(dataset.length)),
+        binSize = (max - min) / binCount,
+        bins = [],
+        values = [];
+
+    for (var i = 0; i < binCount; i++) {
+      bins.push(min + i * binSize);
+      values.push(0);
+    };
+
+    dataset.forEach(function(value) { values[bindex(bins, value)] += 1 });
+
+    return self.bar({
+      labels: bins.map(function(bin) { return formatBinString(bin, binSize) }),
+      datasets: [ { values: values } ]
+    });
+  };
+
   return self;
 };
 
