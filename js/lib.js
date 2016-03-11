@@ -1,16 +1,17 @@
 function D3xter(config) {
-  var self = this;
-  var config = config || {};
+  var self = this,
+      config = config || {};
 
   var height = config.height || 500,
-      width = config.width || 500;
-
-  var margin = {
-    top: height * 0.05,
-    bottom: height * 0.2,
-    left: width * 0.2,
-    right: width * 0.05
-  };
+      width = config.width || 500,
+      margin = {
+        top: height * 0.05,
+        bottom: height * 0.2,
+        left: width * 0.2,
+        right: width * 0.05
+      },
+      chartHeight = height - margin.top - margin.bottom,
+      chartWidth = width - margin.left - margin.right;
 
   function buildCanvas() {
     self.canvas = d3.select(config.selector || 'body')
@@ -272,6 +273,44 @@ function D3xter(config) {
       labels: bins.map(function(bin) { return formatBinString(bin, binSize) }),
       datasets: [ { values: values } ]
     });
+  };
+
+  self.pie = function(input) {
+    buildCanvas();
+
+    var radius = Math.min(chartWidth, chartHeight) / 2;
+
+    var arc = d3.svg.arc()
+      .outerRadius(radius - 10)
+      .innerRadius(0);
+
+    var defaultColor = d3.scale.category10();
+
+    var pie = d3.layout.pie()
+      .sort(null)
+      .value(function(d) { return d });
+
+    var g = self.canvas.selectAll(".arc")
+        .data(pie(input.values))
+        .enter().append("g")
+        .attr("class", "arc");
+
+    g.append("path")
+        .attr("d", arc)
+        .style("fill", function(d, i) {
+          if (input.hasOwnProperty('colors')) return input.colors[i];
+          return defaultColor(i);
+        });
+
+    g.append("text")
+        .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")" })
+        .attr("dy", ".35em")
+        .style("text-anchor", "middle")
+        .text(function(d, i) { return input.labels[i] });
+
+    g.attr("transform", "translate(" + chartWidth / 2 + "," + chartHeight / 2 + ")");
+
+    return self;
   };
 
   return self;
