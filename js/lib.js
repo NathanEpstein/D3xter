@@ -282,40 +282,45 @@ function D3xter(config) {
     });
   };
 
-  self.pie = function(input) {
-    buildCanvas();
-
+  function buildPie(input) {
     var radius = Math.min(canvasWidth, canvasHeight) / 2;
 
-    var arc = d3.svg.arc()
+    self.arc = d3.svg.arc()
       .outerRadius(radius - 10)
       .innerRadius(0);
-
-    var defaultColor = d3.scale.category10();
 
     var pie = d3.layout.pie()
       .sort(null)
       .value(function(d) { return d });
 
-    var g = self.canvas.selectAll(".arc")
+    self.arcGroup = self.canvas.selectAll('.arc')
         .data(pie(input.values))
-        .enter().append("g")
-        .attr("class", "arc");
+        .enter().append('g')
+        .attr('class', 'arc');
+  };
 
-    g.append("path")
-        .attr("d", arc)
-        .style("fill", function(d, i) {
+  function renderPie(input) {
+    var defaultColor = d3.scale.category10();
+    self.arcGroup.append('path')
+        .attr('d', self.arc)
+        .style('fill', function(d, i) {
           if (input.hasOwnProperty('colors')) return input.colors[i];
           return defaultColor(i);
         });
 
-    g.append("text")
-        .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")" })
-        .attr("dy", ".35em")
-        .style("text-anchor", "middle")
+    self.arcGroup.append('text')
+        .attr('transform', function(d) { return 'translate(' + self.arc.centroid(d) + ')' })
+        .attr('dy', '.35em')
+        .style('text-anchor', 'middle')
         .text(function(d, i) { return input.labels[i] });
 
-    g.attr("transform", "translate(" + canvasWidth / 2 + "," + canvasHeight / 2 + ")");
+    self.arcGroup.attr('transform', 'translate(' + canvasWidth / 2 + ',' + canvasHeight / 2 + ')');
+  };
+
+  self.pie = function(input) {
+    buildCanvas();
+    buildPie(input);
+    renderPie(input);
 
     return self;
   };
