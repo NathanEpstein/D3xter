@@ -260,25 +260,35 @@ function D3xter(config) {
     return round2(bin) + ' to ' + round2(bin + binSize);
   };
 
-  self.hist = function(dataset) {
+  function buildHist(dataset) {
     var domain = getBoundaries(dataset),
-        min = domain[0],
-        max = domain[1],
         binCount = Math.round(Math.sqrt(dataset.length)),
-        binSize = (max - min) / binCount,
+        binSize = (domain[1] - domain[0]) / binCount,
         bins = [],
         values = [];
 
     for (var i = 0; i < binCount; i++) {
-      bins.push(min + i * binSize);
+      bins.push(domain[0] + i * binSize);
       values.push(0);
     };
 
     dataset.forEach(function(value) { values[bindex(bins, value)] += 1 });
 
+    return {
+      binSize: binSize,
+      bins: bins,
+      values: values
+    };
+  };
+
+  self.hist = function(dataset) {
+    var histData = buildHist(dataset);
+
     return self.bar({
-      labels: bins.map(function(bin) { return formatBinString(bin, binSize) }),
-      datasets: [ { values: values } ]
+      labels: histData.bins.map(function(bin) {
+        return formatBinString(bin, histData.binSize)
+      }),
+      datasets: [ { values: histData.values } ]
     });
   };
 
