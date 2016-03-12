@@ -10,8 +10,8 @@ function D3xter(config) {
         left: width * 0.2,
         right: width * 0.05
       },
-      chartHeight = height - margin.top - margin.bottom,
-      chartWidth = width - margin.left - margin.right;
+      canvasHeight = height - margin.top - margin.bottom,
+      canvasWidth = width - margin.left - margin.right;
 
   function buildCanvas() {
     self.canvas = d3.select(config.selector || 'body')
@@ -278,7 +278,7 @@ function D3xter(config) {
   self.pie = function(input) {
     buildCanvas();
 
-    var radius = Math.min(chartWidth, chartHeight) / 2;
+    var radius = Math.min(canvasWidth, canvasHeight) / 2;
 
     var arc = d3.svg.arc()
       .outerRadius(radius - 10)
@@ -308,7 +308,49 @@ function D3xter(config) {
         .style("text-anchor", "middle")
         .text(function(d, i) { return input.labels[i] });
 
-    g.attr("transform", "translate(" + chartWidth / 2 + "," + chartHeight / 2 + ")");
+    g.attr("transform", "translate(" + canvasWidth / 2 + "," + canvasHeight / 2 + ")");
+
+    return self;
+  };
+
+  self.timeline = function(events) {
+    // build timeline
+    var sortedEvents = events.sort(function(a, b) {
+      return Date.parse(a.date) - Date.parse(b.date);
+    });
+
+    var min = sortedEvents[0]
+        max = sortedEvents[sortedEvents.length - 1];
+
+    var timeScale = (Date.parse(max.date) - Date.parse(min.date)) > 31536000000 ? 'year' : 'day'; //choose appropriate time scale (day, week, month, year)
+
+    buildCanvas();
+    buildAxisLabels();
+
+    self.xMap = d3.time.scale()
+                  .domain([
+                    Date.parse(min.date),
+                    Date.parse(max.date)
+                  ])
+                  .nice(d3.time[timeScale])
+                  .range([margin.left, width - margin.right]);
+
+    var xAxis = d3.svg.axis()
+                .scale(self.xMap);
+
+    self.canvas.append('g')
+          .attr('transform','translate(0,' + (height - margin.bottom) + ')')
+          .call(xAxis);
+    //
+
+    events.forEach(function(ev) {
+      self.canvas.append('text')
+          .attr('x', self.xMap(Date.parse(ev.date)))
+          .attr('y', canvasHeight / 2) // still need to deal with collisions
+          .text(ev.label)
+          .attr('text-anchor', 'middle')
+          .attr('stroke', 'black');
+    });
 
     return self;
   };
