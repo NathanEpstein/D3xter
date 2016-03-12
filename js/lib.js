@@ -79,6 +79,7 @@ function D3xter(config) {
 
   function buildYAxis() {
     var yAxis = d3.svg.axis()
+                .tickFormat(d3.format('s'))
                 .scale(self.yMap)
                 .orient('left');
 
