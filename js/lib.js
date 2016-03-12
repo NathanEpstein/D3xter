@@ -10,8 +10,8 @@ function D3xter(config) {
         left: width * 0.2,
         right: width * 0.05
       },
-      canvasHeight = height - margin.top - margin.bottom,
-      canvasWidth = width - margin.left - margin.right;
+      innerHeight = height - margin.top - margin.bottom,
+      innerWidth = width - margin.left - margin.right;
 
   function buildCanvas() {
     self.canvas = d3.select(config.selector || 'body')
@@ -94,13 +94,13 @@ function D3xter(config) {
 
   function buildAxisLabels() {
     var xLabel = self.canvas.append('text')
-                .attr('x', (width + margin.left + margin.right) / 2)
-                .attr('y', height - margin.bottom / 2)
+                .attr('x', margin.left + innerWidth / 2)
+                .attr('y', margin.top + innerHeight + margin.bottom / 2)
                 .text(config.xLab)
                 .attr('text-anchor', 'middle');
 
     var yLabel = self.canvas.append('text')
-                .attr('x', - height / 2)
+                .attr('x', - (margin.top + innerHeight / 2))
                 .attr('y', margin.left / 2)
                 .attr('transform', 'rotate(-90)')
                 .text(config.yLab)
@@ -293,7 +293,7 @@ function D3xter(config) {
   };
 
   function buildPie(input) {
-    var radius = Math.min(canvasWidth, canvasHeight) / 2;
+    var radius = Math.min(innerWidth, innerHeight) / 2;
 
     self.arc = d3.svg.arc()
       .outerRadius(radius - 10)
@@ -324,7 +324,7 @@ function D3xter(config) {
         .style('text-anchor', 'middle')
         .text(function(d, i) { return input.labels[i] });
 
-    self.arcGroup.attr('transform', 'translate(' + canvasWidth / 2 + ',' + canvasHeight / 2 + ')');
+    self.arcGroup.attr('transform', 'translate(' + innerWidth / 2 + ',' + innerHeight / 2 + ')');
   };
 
   self.pie = function(input) {
@@ -370,7 +370,7 @@ function D3xter(config) {
       return formattedEvents[date].length;
     }).reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
 
-    var prettyLevels = Math.round(height / 50);
+    var prettyLevels = Math.round(innerHeight / 50);
     self.yMap = d3.scale.linear()
                   .domain([0, Math.max(maxDateFreq, prettyLevels)])
                   .range([height - margin.bottom, margin.top]);
