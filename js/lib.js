@@ -322,10 +322,24 @@ function D3xter(config) {
     var min = sortedEvents[0]
         max = sortedEvents[sortedEvents.length - 1];
 
+    var dateEvents = {};
+    sortedEvents.forEach(function(ev) {
+      dateEvents[ev.date] = dateEvents[ev.date] || [];
+      dateEvents[ev.date].push(ev.label);
+    });
+
+    var maxDateFreq = Object.keys(dateEvents).map(function(date) {
+      return dateEvents[date].length;
+    }).reduce(function(a, b) { return Math.max(a,b) }, -Infinity);
+
     var timeScale = (Date.parse(max.date) - Date.parse(min.date)) > 31536000000 ? 'year' : 'day'; //choose appropriate time scale (day, week, month, year)
 
     buildCanvas();
     buildAxisLabels();
+
+    self.yMap = d3.scale.linear()
+                  .domain([0, maxDateFreq])
+                  .range([height - margin.bottom, margin.top]);
 
     self.xMap = d3.time.scale()
                   .domain([
@@ -343,13 +357,15 @@ function D3xter(config) {
           .call(xAxis);
     //
 
-    events.forEach(function(ev) {
-      self.canvas.append('text')
-          .attr('x', self.xMap(Date.parse(ev.date)))
-          .attr('y', canvasHeight / 2) // still need to deal with collisions
-          .text(ev.label)
+    Object.keys(dateEvents).forEach(function(date) {
+      dateEvents[date].forEach(function(label, index) {
+        self.canvas.append('text')
+          .attr('x', self.xMap(Date.parse(date)))
+          .attr('y', self.yMap(index + 1))
+          .text(label)
           .attr('text-anchor', 'middle')
           .attr('stroke', 'black');
+      });
     });
 
     return self;
