@@ -68,21 +68,28 @@ function D3xter(config) {
     };
   };
 
-  function buildAxes() {
+  function buildXAxis() {
     var xAxis = d3.svg.axis()
                 .scale(self.xMap);
 
+    self.canvas.append('g')
+          .attr('transform','translate(0,' + (height - margin.bottom) + ')')
+          .call(xAxis);
+  };
+
+  function buildYAxis() {
     var yAxis = d3.svg.axis()
                 .scale(self.yMap)
                 .orient('left');
 
     self.canvas.append('g')
-          .attr('transform','translate(0,' + (height - margin.bottom) + ')')
-          .call(xAxis);
-
-    self.canvas.append('g')
           .attr('transform','translate(' + margin.left + ', 0)')
           .call(yAxis);
+  };
+
+  function buildAxes() {
+    buildXAxis();
+    buildYAxis();
   };
 
   function buildAxisLabels() {
@@ -313,52 +320,78 @@ function D3xter(config) {
     return self;
   };
 
-  self.timeline = function(events) {
-    // build timeline
-    var sortedEvents = events.sort(function(a, b) {
-      return Date.parse(a.date) - Date.parse(b.date);
+  function timeScale(minDate, maxDate) {
+    var periods = {
+      second: 1000,
+      minute: 60000,
+      hour: 3600000,
+      day: 86400000,
+      week: 604800000,
+      month: 2678400000,
+      year: 31536000000
+    };
+
+    var range = Date.parse(maxDate) - Date.parse(minDate),
+        scale = 'second';
+    Object.keys(periods).forEach(function(period) {
+      if (range > periods[period]) scale = period;
     });
 
-    var min = sortedEvents[0]
-        max = sortedEvents[sortedEvents.length - 1];
+    return scale;
+  };
 
-    var dateEvents = {};
-    sortedEvents.forEach(function(ev) {
-      dateEvents[ev.date] = dateEvents[ev.date] || [];
-      dateEvents[ev.date].push(ev.label);
+  function formatEvents(events) {
+    var formattedEvents = {};
+    events.forEach(function(ev) {
+      formattedEvents[ev.date] = formattedEvents[ev.date] || [];
+      formattedEvents[ev.date].push(ev.label);
     });
 
-    var maxDateFreq = Object.keys(dateEvents).map(function(date) {
-      return dateEvents[date].length;
-    }).reduce(function(a, b) { return Math.max(a,b) }, -Infinity);
+    return formattedEvents;
+  };
 
-    var timeScale = (Date.parse(max.date) - Date.parse(min.date)) > 31536000000 ? 'year' : 'day'; //choose appropriate time scale (day, week, month, year)
+  function buildYMapTimeline(formattedEvents) {
+    var maxDateFreq = Object.keys(formattedEvents).map(function(date) {
+      return formattedEvents[date].length;
+    }).reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
 
-    buildCanvas();
-    buildAxisLabels();
-
+    var prettyLevels = Math.round(height / 50);
     self.yMap = d3.scale.linear()
-                  .domain([0, maxDateFreq])
+                  .domain([0, Math.max(maxDateFreq, prettyLevels)])
                   .range([height - margin.bottom, margin.top]);
+  };
+
+  function buildXMapTimeline(formattedEvents) {
+    var sortedDates = Object.keys(formattedEvents).sort(function(a, b) {
+      return Date.parse(a) - Date.parse(b);
+    });
+
+    var minDate = sortedDates[0]
+        maxDate = sortedDates[sortedDates.length - 1];
 
     self.xMap = d3.time.scale()
                   .domain([
-                    Date.parse(min.date),
-                    Date.parse(max.date)
+                    Date.parse(minDate),
+                    Date.parse(maxDate)
                   ])
-                  .nice(d3.time[timeScale])
+                  .nice(d3.time[timeScale(minDate, maxDate)])
                   .range([margin.left, width - margin.right]);
+  };
 
-    var xAxis = d3.svg.axis()
-                .scale(self.xMap);
+  function buildTimeline(formattedEvents) {
+    buildCanvas();
+    buildAxisLabels();
+    buildYMapTimeline(formattedEvents);
+    buildXMapTimeline(formattedEvents);
+    buildXAxis();
+  };
 
-    self.canvas.append('g')
-          .attr('transform','translate(0,' + (height - margin.bottom) + ')')
-          .call(xAxis);
-    //
+  self.timeline = function(events) {
+    var formattedEvents = formatEvents(events);
+    buildTimeline(formattedEvents);
 
-    Object.keys(dateEvents).forEach(function(date) {
-      dateEvents[date].forEach(function(label, index) {
+    Object.keys(formattedEvents).forEach(function(date) {
+      formattedEvents[date].forEach(function(label, index) {
         self.canvas.append('text')
           .attr('x', self.xMap(Date.parse(date)))
           .attr('y', self.yMap(index + 1))
