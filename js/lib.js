@@ -172,9 +172,7 @@ function D3xter(config) {
     };
   };
 
-  self.plot = function(datasets) {
-    buildPlot(datasets);
-
+  function renderPlot(datasets) {
     datasets.forEach(function(dataset) {
       if (dataset.hasOwnProperty('labels')) {
         plotText(dataset);
@@ -186,10 +184,14 @@ function D3xter(config) {
         plotPoints(dataset);
       };
     });
+  };
+
+  self.plot = function(input) {
+    buildPlot(input.datasets);
+    renderPlot(input.datasets);
 
     return self;
   };
-
 
   function buildBar(input) {
     var structuredData = [
@@ -402,10 +404,7 @@ function D3xter(config) {
     buildXAxis();
   };
 
-  self.timeline = function(events) {
-    var formattedEvents = formatEvents(events);
-    buildTimeline(formattedEvents);
-
+  function renderTimeline(formattedEvents) {
     Object.keys(formattedEvents).forEach(function(date) {
       formattedEvents[date].forEach(function(label, index) {
         self.canvas.append('text')
@@ -416,6 +415,12 @@ function D3xter(config) {
           .attr('stroke', 'black');
       });
     });
+  };
+
+  self.timeline = function(events) {
+    var formattedEvents = formatEvents(events);
+    buildTimeline(formattedEvents);
+    renderTimeline(formattedEvents);
 
     return self;
   };
