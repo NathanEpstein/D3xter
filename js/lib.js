@@ -193,10 +193,10 @@ function D3xter(config) {
 
     return datasets.map(function(dataset, index) {
       if (isNaN(dataset)) {
-        return defaultColor(index);
+        return dataset.color || defaultColor(index);
       }
       else {
-        return dataset.color || defaultColor(index);
+        return defaultColor(index);
       };
     });
   };
