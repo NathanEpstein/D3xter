@@ -358,6 +358,9 @@ function D3xter(config) {
 
   function renderPie(input) {
     var colors = parseColors(input.values);
+    var total = input.values.reduce(function(a, b) {
+      return a + b;
+    });
 
     self.arcGroup.append('path')
         .attr('d', self.arc)
@@ -367,7 +370,9 @@ function D3xter(config) {
         .attr('transform', function(d) { return 'translate(' + self.arc.centroid(d) + ')' })
         .attr('dy', '.35em')
         .style('text-anchor', 'middle')
-        .text(function(d, i) { return input.labels[i] });
+        .text(function(d, i) {
+          return Math.round(100 * input.values[i] / total) + '%';
+        });
 
     self.arcGroup.attr('transform', 'translate(' + innerWidth / 2 + ',' + innerHeight / 2 + ')');
   };
@@ -375,7 +380,7 @@ function D3xter(config) {
   self.pie = function(input) {
     buildCanvas();
     buildPie(input);
-    buildLegend(input.values, input.labels)
+    buildLegend(input.values, input.labels);
     renderPie(input);
 
     return self;
