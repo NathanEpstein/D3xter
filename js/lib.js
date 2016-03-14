@@ -6,9 +6,9 @@ function D3xter(config) {
       width = config.width || 500,
       margin = {
         top: height * 0.05,
-        bottom: height * 0.2,
-        left: width * 0.2,
-        right: width * 0.05
+        bottom: height * 0.25,
+        left: width * 0.15,
+        right: width * 0.15
       },
       innerHeight = height - margin.top - margin.bottom,
       innerWidth = width - margin.left - margin.right;
@@ -108,13 +108,14 @@ function D3xter(config) {
                 .attr('text-anchor', 'middle');
   };
 
-  function buildPlot(datasets) {
+  function buildPlot(input) {
     buildCanvas();
-    buildXMap(datasets);
-    buildYMap(datasets);
-    buildZMap(datasets);
+    buildXMap(input.datasets);
+    buildYMap(input.datasets);
+    buildZMap(input.datasets);
     buildAxes();
     buildAxisLabels();
+    buildLegend(input.datasets, input.labels);
   };
 
   function getBoundaries(data) {
@@ -186,8 +187,40 @@ function D3xter(config) {
     });
   };
 
+  function parseColors(datasets) {
+    var defaultColor = d3.scale.category10();
+
+    return datasets.map(function(dataset, index) {
+      return dataset.color || defaultColor(index);
+    });
+  };
+
+  function buildLegend(datasets, labels) {
+    var colors = parseColors(datasets);
+
+    var legend = self.canvas.append("g")
+        .attr("class", "legend");
+
+    colors.forEach(function(color, index) {
+      legend.append("rect")
+          .attr("x", width - 18)
+          .attr("y", index * 20)
+          .attr("width", 18)
+          .attr("height", 18)
+          .style("fill", color);
+
+      legend.append("text")
+          .attr("x", width - 24)
+          .attr("y", index * 20 + 9)
+          .attr("dy", ".35em")
+          .style("text-anchor", "end")
+          .text(labels[index]);
+    });
+
+  };
+
   self.plot = function(input) {
-    buildPlot(input.datasets);
+    buildPlot(input);
     renderPlot(input.datasets);
 
     return self;
