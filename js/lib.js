@@ -3,7 +3,7 @@ function D3xter(config) {
       config = config || {};
 
   var height = config.height || 500,
-      width = config.width || 500,
+      width = config.width || 700,
       margin = {
         top: height * 0.05,
         bottom: height * 0.25,
@@ -135,7 +135,7 @@ function D3xter(config) {
     return uniques;
   };
 
-  function plotPoints(dataset) {
+  function plotPoints(dataset, color) {
     for (var i = 0; i < dataset.x.length; i++) {
       self.canvas.append('circle')
           .attr('cx', self.xMap(dataset.x[i]))
@@ -145,12 +145,11 @@ function D3xter(config) {
             return self.zMap();
           })
           .attr('opacity', 0.5)
-          .attr('fill', dataset.color || 'steelBlue');
+          .attr('fill', color);
     };
   };
 
-  function plotLine(dataset) {
-    var color = dataset.color || 'black';
+  function plotLine(dataset, color) {
     for (var i = 1; i < dataset.x.length; i++) {
       self.canvas.append('line')
           .attr('stroke-width', 1)
@@ -174,15 +173,17 @@ function D3xter(config) {
   };
 
   function renderPlot(datasets) {
-    datasets.forEach(function(dataset) {
+    var colors = parseColors(datasets);
+
+    datasets.forEach(function(dataset, index) {
       if (dataset.hasOwnProperty('labels')) {
         plotText(dataset);
       }
       else if (dataset.line) {
-        plotLine(dataset);
+        plotLine(dataset, colors[index]);
       }
       else {
-        plotPoints(dataset);
+        plotPoints(dataset, colors[index]);
       };
     });
   };
@@ -191,7 +192,12 @@ function D3xter(config) {
     var defaultColor = d3.scale.category10();
 
     return datasets.map(function(dataset, index) {
-      return dataset.color || defaultColor(index);
+      if (isNaN(dataset)) {
+        return defaultColor(index);
+      }
+      else {
+        return dataset.color || defaultColor(index);
+      };
     });
   };
 
@@ -242,6 +248,7 @@ function D3xter(config) {
     buildXMapBar(input);
     buildAxes();
     buildAxisLabels();
+    buildLegend(input.datasets, input.labels);
   };
 
   function buildXMapBar(input) {
@@ -256,10 +263,8 @@ function D3xter(config) {
         .rangeRoundBands([0, self.xMap.rangeBand()], .05);
   };
 
-  self.bar = function(input) {
-    buildBar(input);
-
-    var defaultColor = d3.scale.category10();
+  function renderBar(input) {
+    var colors = parseColors(input.datasets);
 
     input.datasets.forEach(function(dataset, dataIndex) {
       dataset.values.forEach(function(value, labelIndex) {
@@ -268,9 +273,14 @@ function D3xter(config) {
             .attr("x", self.xMap(input.labels[labelIndex]) + self.innerXMap(dataIndex))
             .attr("y", self.yMap(Math.max(value, 0)))
             .attr("height", Math.abs(self.yMap(value) - self.yMap(0)))
-            .style("fill", dataset.color || defaultColor(dataIndex));
+            .style("fill", colors[dataIndex]);
       });
     });
+  };
+
+  self.bar = function(input) {
+    buildBar(input);
+    renderBar(input);
 
     return self;
   };
@@ -346,13 +356,11 @@ function D3xter(config) {
   };
 
   function renderPie(input) {
-    var defaultColor = d3.scale.category10();
+    var colors = parseColors(input.values);
+
     self.arcGroup.append('path')
         .attr('d', self.arc)
-        .style('fill', function(d, i) {
-          if (input.hasOwnProperty('colors')) return input.colors[i];
-          return defaultColor(i);
-        });
+        .style('fill', function(d, i) { return colors[i] });
 
     self.arcGroup.append('text')
         .attr('transform', function(d) { return 'translate(' + self.arc.centroid(d) + ')' })
@@ -366,6 +374,7 @@ function D3xter(config) {
   self.pie = function(input) {
     buildCanvas();
     buildPie(input);
+    buildLegend(input.values, input.labels)
     renderPie(input);
 
     return self;
