@@ -202,6 +202,8 @@ function D3xter(config) {
   };
 
   function buildLegend(datasets, labels) {
+    if (typeof labels === 'undefined') return;
+
     var colors = parseColors(datasets);
 
     var legend = self.canvas.append("g")
@@ -222,7 +224,6 @@ function D3xter(config) {
           .style("text-anchor", "end")
           .text(labels[index]);
     });
-
   };
 
   self.plot = function(input) {
@@ -235,7 +236,7 @@ function D3xter(config) {
   function buildBar(input) {
     var structuredData = [
       {
-        x: input.labels.map(String),
+        x: input.groups.map(String),
         y: input.datasets
                 .map(function(dataset) { return dataset.values })
                 .reduce(function(a, b) { return a.concat(b) }, [])
@@ -255,7 +256,7 @@ function D3xter(config) {
     var datasetIndexes = input.datasets.map(function(dataset, index) { return index });
 
     self.xMap = d3.scale.ordinal()
-        .domain(input.labels)
+        .domain(input.groups)
         .rangeRoundBands([margin.left, width - margin.right], .1);
 
     self.innerXMap = d3.scale.ordinal()
@@ -270,7 +271,7 @@ function D3xter(config) {
       dataset.values.forEach(function(value, labelIndex) {
         self.canvas.append('rect')
             .attr("width", self.innerXMap.rangeBand())
-            .attr("x", self.xMap(input.labels[labelIndex]) + self.innerXMap(dataIndex))
+            .attr("x", self.xMap(input.groups[labelIndex]) + self.innerXMap(dataIndex))
             .attr("y", self.yMap(Math.max(value, 0)))
             .attr("height", Math.abs(self.yMap(value) - self.yMap(0)))
             .style("fill", colors[dataIndex]);
@@ -331,7 +332,7 @@ function D3xter(config) {
     var histData = buildHist(dataset);
 
     return self.bar({
-      labels: histData.bins.map(function(bin) {
+      groups: histData.bins.map(function(bin) {
         return formatBinString(bin, histData.binSize)
       }),
       datasets: [ { values: histData.values } ]
