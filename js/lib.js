@@ -294,8 +294,8 @@ function D3xter(config) {
   function buildTimeline(formattedEvents) {
     var maxFreq = maxDateFreq(formattedEvents)
 
-    buildCanvas();
     formatTimelineCanvas(maxFreq);
+    buildCanvas();
     buildLabels();
     buildYMapTimeline(maxFreq);
     buildXMapTimeline(formattedEvents);
@@ -358,6 +358,7 @@ function D3xter(config) {
     Object.keys(formattedEvents).forEach(function(date) {
       formattedEvents[date].forEach(function(label, index) {
         self.canvas.append('text')
+          .attr('class', 'timeline-text')
           .attr('x', self.xMap(Date.parse(date)))
           .attr('y', self.yMap(index + 1))
           .text(label)
@@ -370,6 +371,7 @@ function D3xter(config) {
   function plotPoints(dataset, color) {
     for (var i = 0; i < dataset.x.length; i++) {
       self.canvas.append('circle')
+          .attr('class', 'plot-circle')
           .attr('cx', self.xMap(dataset.x[i]))
           .attr('cy', self.yMap(dataset.y[i]))
           .attr('r', function() {
@@ -384,6 +386,7 @@ function D3xter(config) {
   function plotLine(dataset, color) {
     for (var i = 1; i < dataset.x.length; i++) {
       self.canvas.append('line')
+          .attr('class', 'plot-line')
           .attr('stroke-width', 1)
           .attr('stroke', color)
           .attr('x1', self.xMap(dataset.x[i - 1]))
@@ -396,6 +399,7 @@ function D3xter(config) {
   function plotText(dataset, color) {
     for (var i = 0; i < dataset.x.length; i++) {
       self.canvas.append('text')
+          .attr('class', 'plot-text')
           .attr('x', self.xMap(dataset.x[i]))
           .attr('y', self.yMap(dataset.y[i]))
           .text(dataset.labels[i])
@@ -494,7 +498,7 @@ function D3xter(config) {
   };
 
   function formatTimelineCanvas(maxFreq) {
-    if (!config.hasOwnProperty(height)) {
+    if (!config.hasOwnProperty('height')) {
       height = 200 + maxFreq * 50;
     };
   };
