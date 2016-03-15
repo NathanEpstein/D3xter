@@ -2,13 +2,13 @@ function D3xter(config) {
   var self = this,
       config = config || {};
 
-  var height = config.height || 500,
+  var height = config.height || 700,
       width = config.width || 700,
       margin = {
-        top: height * 0.05,
-        bottom: height * 0.25,
-        left: width * 0.15,
-        right: width * 0.15
+        top: 100,
+        bottom: 100,
+        left: 100,
+        right: 100
       },
       innerHeight = height - margin.top - margin.bottom,
       innerWidth = width - margin.left - margin.right;
@@ -98,14 +98,16 @@ function D3xter(config) {
                 .attr('x', margin.left + innerWidth / 2)
                 .attr('y', margin.top + innerHeight + margin.bottom / 2)
                 .text(config.xLab)
-                .attr('text-anchor', 'middle');
+                .attr('text-anchor', 'middle')
+                .attr('class', 'label');
 
     var yLabel = self.canvas.append('text')
                 .attr('x', - (margin.top + innerHeight / 2))
                 .attr('y', margin.left / 2)
                 .attr('transform', 'rotate(-90)')
                 .text(config.yLab)
-                .attr('text-anchor', 'middle');
+                .attr('text-anchor', 'middle')
+                .attr('class', 'label');
   };
 
   function buildPlot(input) {
@@ -161,14 +163,14 @@ function D3xter(config) {
     };
   };
 
-  function plotText(dataset) {
-    for (var i = 1; i < dataset.x.length; i++) {
+  function plotText(dataset, color) {
+    for (var i = 0; i < dataset.x.length; i++) {
       self.canvas.append('text')
           .attr('x', self.xMap(dataset.x[i]))
           .attr('y', self.yMap(dataset.y[i]))
           .text(dataset.labels[i])
           .attr('text-anchor', 'middle')
-          .attr('stroke', dataset.color || 'black')
+          .attr('fill', color)
     };
   };
 
@@ -177,7 +179,7 @@ function D3xter(config) {
 
     datasets.forEach(function(dataset, index) {
       if (dataset.hasOwnProperty('labels')) {
-        plotText(dataset);
+        plotText(dataset, colors[index]);
       }
       else if (dataset.line) {
         plotLine(dataset, colors[index]);
@@ -202,7 +204,7 @@ function D3xter(config) {
   };
 
   function buildLegend(datasets, labels) {
-    if (typeof labels === 'undefined') return;
+    if (typeof labels === 'undefined' || config.legend == false) return;
 
     var colors = parseColors(datasets);
 
@@ -339,7 +341,7 @@ function D3xter(config) {
     });
   };
 
-  function buildPie(input) {
+  function buildArcs(input) {
     var radius = Math.min(innerWidth, innerHeight) / 2;
 
     self.arc = d3.svg.arc()
@@ -354,6 +356,12 @@ function D3xter(config) {
         .data(pie(input.values))
         .enter().append('g')
         .attr('class', 'arc');
+  };
+
+  function buildPie(input) {
+    buildCanvas();
+    buildArcs(input);
+    buildLegend(input.values, input.labels);
   };
 
   function renderPie(input) {
@@ -374,13 +382,11 @@ function D3xter(config) {
           return Math.round(100 * input.values[i] / total) + '%';
         });
 
-    self.arcGroup.attr('transform', 'translate(' + innerWidth / 2 + ',' + innerHeight / 2 + ')');
+    self.arcGroup.attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')');
   };
 
   self.pie = function(input) {
-    buildCanvas();
     buildPie(input);
-    buildLegend(input.values, input.labels);
     renderPie(input);
 
     return self;
