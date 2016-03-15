@@ -13,6 +13,46 @@ function D3xter(config) {
       innerHeight = height - margin.top - margin.bottom,
       innerWidth = width - margin.left - margin.right;
 
+  self.plot = function(input) {
+    buildPlot(input);
+    renderPlot(input.datasets);
+
+    return self;
+  };
+
+  self.pie = function(input) {
+    buildPie(input);
+    renderPie(input);
+
+    return self;
+  };
+
+  self.bar = function(input) {
+    buildBar(input);
+    renderBar(input);
+
+    return self;
+  };
+
+  self.hist = function(dataset) {
+    var histData = buildHist(dataset);
+
+    return self.bar({
+      groups: histData.bins.map(function(bin) {
+        return formatBinString(bin, histData.binSize)
+      }),
+      datasets: [ { values: histData.values } ]
+    });
+  };
+
+  self.timeline = function(events) {
+    var formattedEvents = formatEvents(events);
+    buildTimeline(formattedEvents);
+    renderTimeline(formattedEvents);
+
+    return self;
+  };
+
   function buildCanvas() {
     self.canvas = d3.select(config.selector || 'body')
                   .append('svg')
@@ -127,21 +167,204 @@ function D3xter(config) {
     buildLegend(input.datasets, input.labels);
   };
 
-  function getBoundaries(data) {
-    var min = Math.min.apply(null, data);
-    var max = Math.max.apply(null, data);
-    return [min, max];
+  function buildLegend(datasets, labels) {
+    if (typeof labels === 'undefined' || config.legend == false) return;
+
+    var colors = parseColors(datasets);
+
+    var legend = self.canvas.append("g")
+        .attr("class", "legend");
+
+    colors.forEach(function(color, index) {
+      legend.append("rect")
+          .attr("x", width - 18)
+          .attr("y", index * 20)
+          .attr("width", 18)
+          .attr("height", 18)
+          .style("fill", color);
+
+      legend.append("text")
+          .attr("x", width - 24)
+          .attr("y", index * 20 + 9)
+          .attr("dy", ".35em")
+          .style("text-anchor", "end")
+          .text(labels[index]);
+    });
   };
 
-  function getUniqueValues(data) {
-    var seenValues = {}, uniques = [];
-    data.forEach(function(val) {
-      if (seenValues[val] != 1) {
-        seenValues[val] = 1;
-        uniques.push(val);
+  function buildBar(input) {
+    var structuredData = [
+      {
+        x: input.groups.map(String),
+        y: input.datasets
+                .map(function(dataset) { return dataset.values })
+                .reduce(function(a, b) { return a.concat(b) }, [])
+                .concat([0])
+      }
+    ];
+
+    buildCanvas();
+    buildYMap(structuredData);
+    buildXMapBar(input);
+    buildAxes();
+    buildLabels();
+    buildLegend(input.datasets, input.labels);
+  };
+
+  function buildXMapBar(input) {
+    var datasetIndexes = input.datasets.map(function(dataset, index) { return index });
+
+    self.xMap = d3.scale.ordinal()
+        .domain(input.groups)
+        .rangeRoundBands([margin.left, width - margin.right], .1);
+
+    self.innerXMap = d3.scale.ordinal()
+        .domain(datasetIndexes)
+        .rangeRoundBands([0, self.xMap.rangeBand()], .05);
+  };
+
+  function buildHist(dataset) {
+    var domain = getBoundaries(dataset),
+        binCount = Math.round(Math.sqrt(dataset.length)),
+        binSize = (domain[1] - domain[0]) / binCount,
+        bins = [],
+        values = [];
+
+    for (var i = 0; i < binCount; i++) {
+      bins.push(domain[0] + i * binSize);
+      values.push(0);
+    };
+
+    dataset.forEach(function(value) { values[bindex(bins, value)] += 1 });
+
+    return {
+      binSize: binSize,
+      bins: bins,
+      values: values
+    };
+  };
+
+  function buildArcs(input) {
+    var radius = Math.min(innerWidth, innerHeight) / 2;
+
+    self.arc = d3.svg.arc()
+      .outerRadius(radius - 10)
+      .innerRadius(0);
+
+    var pie = d3.layout.pie()
+      .sort(null)
+      .value(function(d) { return d });
+
+    self.arcGroup = self.canvas.selectAll('.arc')
+        .data(pie(input.values))
+        .enter().append('g')
+        .attr('class', 'arc');
+  };
+
+  function buildPie(input) {
+    buildCanvas();
+    buildLabels();
+    buildArcs(input);
+    buildLegend(input.values, input.labels);
+  };
+
+  function buildYMapTimeline(maxFreq) {
+    self.yMap = d3.scale.linear()
+                  .domain([0, maxFreq])
+                  .range([height - margin.bottom, margin.top]);
+  };
+
+  function buildXMapTimeline(formattedEvents) {
+    var sortedDates = Object.keys(formattedEvents).sort(function(a, b) {
+      return Date.parse(a) - Date.parse(b);
+    });
+
+    var minDate = sortedDates[0]
+        maxDate = sortedDates[sortedDates.length - 1];
+
+    self.xMap = d3.time.scale()
+                  .domain([
+                    Date.parse(minDate),
+                    Date.parse(maxDate)
+                  ])
+                  .nice(d3.time[timeScale(minDate, maxDate)])
+                  .range([margin.left, width - margin.right]);
+  };
+
+  function buildTimeline(formattedEvents) {
+    var maxFreq = maxDateFreq(formattedEvents)
+
+    buildCanvas();
+    formatTimelineCanvas(maxFreq);
+    buildLabels();
+    buildYMapTimeline(maxFreq);
+    buildXMapTimeline(formattedEvents);
+    buildXAxis();
+  };
+
+  function renderPlot(datasets) {
+    var colors = parseColors(datasets);
+
+    datasets.forEach(function(dataset, index) {
+      if (dataset.hasOwnProperty('labels')) {
+        plotText(dataset, colors[index]);
+      }
+      else if (dataset.line) {
+        plotLine(dataset, colors[index]);
+      }
+      else {
+        plotPoints(dataset, colors[index]);
       };
     });
-    return uniques;
+  };
+
+  function renderBar(input) {
+    var colors = parseColors(input.datasets);
+
+    input.datasets.forEach(function(dataset, dataIndex) {
+      dataset.values.forEach(function(value, labelIndex) {
+        self.canvas.append('rect')
+            .attr("width", self.innerXMap.rangeBand())
+            .attr("x", self.xMap(input.groups[labelIndex]) + self.innerXMap(dataIndex))
+            .attr("y", self.yMap(Math.max(value, 0)))
+            .attr("height", Math.abs(self.yMap(value) - self.yMap(0)))
+            .style("fill", colors[dataIndex]);
+      });
+    });
+  };
+
+  function renderPie(input) {
+    var colors = parseColors(input.values);
+    var total = input.values.reduce(function(a, b) {
+      return a + b;
+    });
+
+    self.arcGroup.append('path')
+        .attr('d', self.arc)
+        .style('fill', function(d, i) { return colors[i] });
+
+    self.arcGroup.append('text')
+        .attr('transform', function(d) { return 'translate(' + self.arc.centroid(d) + ')' })
+        .attr('dy', '.35em')
+        .style('text-anchor', 'middle')
+        .text(function(d, i) {
+          return Math.round(100 * input.values[i] / total) + '%';
+        });
+
+    self.arcGroup.attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')');
+  };
+
+  function renderTimeline(formattedEvents) {
+    Object.keys(formattedEvents).forEach(function(date) {
+      formattedEvents[date].forEach(function(label, index) {
+        self.canvas.append('text')
+          .attr('x', self.xMap(Date.parse(date)))
+          .attr('y', self.yMap(index + 1))
+          .text(label)
+          .attr('text-anchor', 'middle')
+          .attr('stroke', 'black');
+      });
+    });
   };
 
   function plotPoints(dataset, color) {
@@ -181,20 +404,21 @@ function D3xter(config) {
     };
   };
 
-  function renderPlot(datasets) {
-    var colors = parseColors(datasets);
+  function getBoundaries(data) {
+    var min = Math.min.apply(null, data);
+    var max = Math.max.apply(null, data);
+    return [min, max];
+  };
 
-    datasets.forEach(function(dataset, index) {
-      if (dataset.hasOwnProperty('labels')) {
-        plotText(dataset, colors[index]);
-      }
-      else if (dataset.line) {
-        plotLine(dataset, colors[index]);
-      }
-      else {
-        plotPoints(dataset, colors[index]);
+  function getUniqueValues(data) {
+    var seenValues = {}, uniques = [];
+    data.forEach(function(val) {
+      if (seenValues[val] != 1) {
+        seenValues[val] = 1;
+        uniques.push(val);
       };
     });
+    return uniques;
   };
 
   function parseColors(datasets) {
@@ -208,91 +432,6 @@ function D3xter(config) {
         return defaultColor(index);
       };
     });
-  };
-
-  function buildLegend(datasets, labels) {
-    if (typeof labels === 'undefined' || config.legend == false) return;
-
-    var colors = parseColors(datasets);
-
-    var legend = self.canvas.append("g")
-        .attr("class", "legend");
-
-    colors.forEach(function(color, index) {
-      legend.append("rect")
-          .attr("x", width - 18)
-          .attr("y", index * 20)
-          .attr("width", 18)
-          .attr("height", 18)
-          .style("fill", color);
-
-      legend.append("text")
-          .attr("x", width - 24)
-          .attr("y", index * 20 + 9)
-          .attr("dy", ".35em")
-          .style("text-anchor", "end")
-          .text(labels[index]);
-    });
-  };
-
-  self.plot = function(input) {
-    buildPlot(input);
-    renderPlot(input.datasets);
-
-    return self;
-  };
-
-  function buildBar(input) {
-    var structuredData = [
-      {
-        x: input.groups.map(String),
-        y: input.datasets
-                .map(function(dataset) { return dataset.values })
-                .reduce(function(a, b) { return a.concat(b) }, [])
-                .concat([0])
-      }
-    ];
-
-    buildCanvas();
-    buildYMap(structuredData);
-    buildXMapBar(input);
-    buildAxes();
-    buildLabels();
-    buildLegend(input.datasets, input.labels);
-  };
-
-  function buildXMapBar(input) {
-    var datasetIndexes = input.datasets.map(function(dataset, index) { return index });
-
-    self.xMap = d3.scale.ordinal()
-        .domain(input.groups)
-        .rangeRoundBands([margin.left, width - margin.right], .1);
-
-    self.innerXMap = d3.scale.ordinal()
-        .domain(datasetIndexes)
-        .rangeRoundBands([0, self.xMap.rangeBand()], .05);
-  };
-
-  function renderBar(input) {
-    var colors = parseColors(input.datasets);
-
-    input.datasets.forEach(function(dataset, dataIndex) {
-      dataset.values.forEach(function(value, labelIndex) {
-        self.canvas.append('rect')
-            .attr("width", self.innerXMap.rangeBand())
-            .attr("x", self.xMap(input.groups[labelIndex]) + self.innerXMap(dataIndex))
-            .attr("y", self.yMap(Math.max(value, 0)))
-            .attr("height", Math.abs(self.yMap(value) - self.yMap(0)))
-            .style("fill", colors[dataIndex]);
-      });
-    });
-  };
-
-  self.bar = function(input) {
-    buildBar(input);
-    renderBar(input);
-
-    return self;
   };
 
   function bindex(bins, value) {
@@ -312,92 +451,12 @@ function D3xter(config) {
     return Math.round(num * 100) / 100;
   };
 
-  function formatBinString(bin, binSize) {
-    return round2(bin) + ' to ' + round2(bin + binSize);
-  };
+  function maxDateFreq(formattedEvents) {
+    var maxFreq = Object.keys(formattedEvents).map(function(date) {
+      return formattedEvents[date].length;
+    }).reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
 
-  function buildHist(dataset) {
-    var domain = getBoundaries(dataset),
-        binCount = Math.round(Math.sqrt(dataset.length)),
-        binSize = (domain[1] - domain[0]) / binCount,
-        bins = [],
-        values = [];
-
-    for (var i = 0; i < binCount; i++) {
-      bins.push(domain[0] + i * binSize);
-      values.push(0);
-    };
-
-    dataset.forEach(function(value) { values[bindex(bins, value)] += 1 });
-
-    return {
-      binSize: binSize,
-      bins: bins,
-      values: values
-    };
-  };
-
-  self.hist = function(dataset) {
-    var histData = buildHist(dataset);
-
-    return self.bar({
-      groups: histData.bins.map(function(bin) {
-        return formatBinString(bin, histData.binSize)
-      }),
-      datasets: [ { values: histData.values } ]
-    });
-  };
-
-  function buildArcs(input) {
-    var radius = Math.min(innerWidth, innerHeight) / 2;
-
-    self.arc = d3.svg.arc()
-      .outerRadius(radius - 10)
-      .innerRadius(0);
-
-    var pie = d3.layout.pie()
-      .sort(null)
-      .value(function(d) { return d });
-
-    self.arcGroup = self.canvas.selectAll('.arc')
-        .data(pie(input.values))
-        .enter().append('g')
-        .attr('class', 'arc');
-  };
-
-  function buildPie(input) {
-    buildCanvas();
-    buildLabels();
-    buildArcs(input);
-    buildLegend(input.values, input.labels);
-  };
-
-  function renderPie(input) {
-    var colors = parseColors(input.values);
-    var total = input.values.reduce(function(a, b) {
-      return a + b;
-    });
-
-    self.arcGroup.append('path')
-        .attr('d', self.arc)
-        .style('fill', function(d, i) { return colors[i] });
-
-    self.arcGroup.append('text')
-        .attr('transform', function(d) { return 'translate(' + self.arc.centroid(d) + ')' })
-        .attr('dy', '.35em')
-        .style('text-anchor', 'middle')
-        .text(function(d, i) {
-          return Math.round(100 * input.values[i] / total) + '%';
-        });
-
-    self.arcGroup.attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')');
-  };
-
-  self.pie = function(input) {
-    buildPie(input);
-    renderPie(input);
-
-    return self;
+    return maxFreq;
   };
 
   function timeScale(minDate, maxDate) {
@@ -420,6 +479,10 @@ function D3xter(config) {
     return scale;
   };
 
+  function formatBinString(bin, binSize) {
+    return round2(bin) + ' to ' + round2(bin + binSize);
+  };
+
   function formatEvents(events) {
     var formattedEvents = {};
     events.forEach(function(ev) {
@@ -430,73 +493,10 @@ function D3xter(config) {
     return formattedEvents;
   };
 
-  function maxDateFreq(formattedEvents) {
-    var maxFreq = Object.keys(formattedEvents).map(function(date) {
-      return formattedEvents[date].length;
-    }).reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
-
-    return maxFreq;
-  };
-
-  function buildYMapTimeline(maxFreq) {
-    self.yMap = d3.scale.linear()
-                  .domain([0, maxFreq])
-                  .range([height - margin.bottom, margin.top]);
-  };
-
-  function buildXMapTimeline(formattedEvents) {
-    var sortedDates = Object.keys(formattedEvents).sort(function(a, b) {
-      return Date.parse(a) - Date.parse(b);
-    });
-
-    var minDate = sortedDates[0]
-        maxDate = sortedDates[sortedDates.length - 1];
-
-    self.xMap = d3.time.scale()
-                  .domain([
-                    Date.parse(minDate),
-                    Date.parse(maxDate)
-                  ])
-                  .nice(d3.time[timeScale(minDate, maxDate)])
-                  .range([margin.left, width - margin.right]);
-  };
-
   function formatTimelineCanvas(maxFreq) {
     if (!config.hasOwnProperty(height)) {
       height = 200 + maxFreq * 50;
     };
-  };
-
-  function buildTimeline(formattedEvents) {
-    var maxFreq = maxDateFreq(formattedEvents)
-
-    buildCanvas();
-    formatTimelineCanvas(maxFreq);
-    buildLabels();
-    buildYMapTimeline(maxFreq);
-    buildXMapTimeline(formattedEvents);
-    buildXAxis();
-  };
-
-  function renderTimeline(formattedEvents) {
-    Object.keys(formattedEvents).forEach(function(date) {
-      formattedEvents[date].forEach(function(label, index) {
-        self.canvas.append('text')
-          .attr('x', self.xMap(Date.parse(date)))
-          .attr('y', self.yMap(index + 1))
-          .text(label)
-          .attr('text-anchor', 'middle')
-          .attr('stroke', 'black');
-      });
-    });
-  };
-
-  self.timeline = function(events) {
-    var formattedEvents = formatEvents(events);
-    buildTimeline(formattedEvents);
-    renderTimeline(formattedEvents);
-
-    return self;
   };
 
   return self;
