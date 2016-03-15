@@ -3,6 +3,11 @@ svg .tick line, svg .domain {
   stroke: black;
 }
 
+svg .title {
+  font-size: 20;
+  font-weight: bold;
+}
+
 svg .label {
   font-size: 15;
 }

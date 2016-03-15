@@ -2,7 +2,7 @@ function D3xter(config) {
   var self = this,
       config = config || {};
 
-  var height = config.height || 700,
+  var height = config.height || 500,
       width = config.width || 700,
       margin = {
         top: 100,
@@ -93,7 +93,7 @@ function D3xter(config) {
     buildYAxis();
   };
 
-  function buildAxisLabels() {
+  function buildLabels() {
     var xLabel = self.canvas.append('text')
                 .attr('x', margin.left + innerWidth / 2)
                 .attr('y', margin.top + innerHeight + margin.bottom / 2)
@@ -108,6 +108,13 @@ function D3xter(config) {
                 .text(config.yLab)
                 .attr('text-anchor', 'middle')
                 .attr('class', 'label');
+
+    var title = self.canvas.append('text')
+                .attr('x', margin.left + innerWidth / 2)
+                .attr('y', margin.top / 2)
+                .text(config.title)
+                .attr('text-anchor', 'middle')
+                .attr('class', 'title');
   };
 
   function buildPlot(input) {
@@ -116,7 +123,7 @@ function D3xter(config) {
     buildYMap(input.datasets);
     buildZMap(input.datasets);
     buildAxes();
-    buildAxisLabels();
+    buildLabels();
     buildLegend(input.datasets, input.labels);
   };
 
@@ -250,7 +257,7 @@ function D3xter(config) {
     buildYMap(structuredData);
     buildXMapBar(input);
     buildAxes();
-    buildAxisLabels();
+    buildLabels();
     buildLegend(input.datasets, input.labels);
   };
 
@@ -360,6 +367,7 @@ function D3xter(config) {
 
   function buildPie(input) {
     buildCanvas();
+    buildLabels();
     buildArcs(input);
     buildLegend(input.values, input.labels);
   };
@@ -422,14 +430,17 @@ function D3xter(config) {
     return formattedEvents;
   };
 
-  function buildYMapTimeline(formattedEvents) {
-    var maxDateFreq = Object.keys(formattedEvents).map(function(date) {
+  function maxDateFreq(formattedEvents) {
+    var maxFreq = Object.keys(formattedEvents).map(function(date) {
       return formattedEvents[date].length;
     }).reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
 
-    var prettyLevels = Math.round(innerHeight / 50);
+    return maxFreq;
+  };
+
+  function buildYMapTimeline(maxFreq) {
     self.yMap = d3.scale.linear()
-                  .domain([0, Math.max(maxDateFreq, prettyLevels)])
+                  .domain([0, maxFreq])
                   .range([height - margin.bottom, margin.top]);
   };
 
@@ -450,10 +461,19 @@ function D3xter(config) {
                   .range([margin.left, width - margin.right]);
   };
 
+  function formatTimelineCanvas(maxFreq) {
+    if (!config.hasOwnProperty(height)) {
+      height = 200 + maxFreq * 50;
+    };
+  };
+
   function buildTimeline(formattedEvents) {
+    var maxFreq = maxDateFreq(formattedEvents)
+
     buildCanvas();
-    buildAxisLabels();
-    buildYMapTimeline(formattedEvents);
+    formatTimelineCanvas(maxFreq);
+    buildLabels();
+    buildYMapTimeline(maxFreq);
     buildXMapTimeline(formattedEvents);
     buildXAxis();
   };
