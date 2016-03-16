@@ -1,399 +1,507 @@
-// START FUNCTION: This function creates the canvas, the everything bundle within the canvas, the axes (given scale functions), and the axes labels
-start = function(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selector){
+function D3xter(config) {
+  var self = this,
+      config = config || {};
 
-  var canvas = d3.select(selector)
-                .append('svg')
-                .attr('height',canvasHeight)
-                .attr('width', canvasWidth);
+  var height = config.height || 500,
+      width = config.width || 700,
+      margin = {
+        top: 100,
+        bottom: 100,
+        left: 100,
+        right: 100
+      },
+      innerHeight = height - margin.top - margin.bottom,
+      innerWidth = width - margin.left - margin.right;
 
-  var everything = canvas.append('g');
+  self.plot = function(input) {
+    buildPlot(input);
+    renderPlot(input.datasets);
 
-  everything.attr('transform','translate('+(width * 0.2)+','+height*0.1+')');
-
-  var xAxis = d3.svg.axis()
-              .scale(xMap);
-
-  var yAxis = d3.svg.axis()
-              .scale(yMap)
-              .orient('left');
-
-  everything.append('g')
-        .attr('transform','translate(0,'+height+')')
-        .call(xAxis);
-
-  everything.append('g')
-        .call(yAxis);
-
-  var xLabel = everything.append('text')
-              .attr('x',canvasWidth*0.4)
-              .attr('y',height+45)
-              .text(xLab)
-              .attr('text-anchor','middle');
-
-  var yLabel = everything.append('text')
-              .attr('x', -canvasHeight*0.4)
-              .attr('y', -canvasWidth*0.1)
-              .attr('transform','rotate(-90)')
-              .text(yLab)
-              .attr('text-anchor','middle');
-
-  var objects = [canvas,everything];
-  return objects;
-
-}
-// END OF START FUNCTION
-
-pie = function(data,config){
-  config = config || {};
-  config.labels = config.labels || data;
-  var selector = config.selector || 'body',
-      height = config.height || 500,
-      width = config.width || 500;
-      canvas = d3.select(selector).append('svg')
-          .attr('height',height)
-          .attr('width',width);
-
-  var radius = Math.min(width,height)/2;
-
-  var arc = d3.svg.arc()
-    .outerRadius(radius - 10)
-    .innerRadius(0);
-
-  // set colors
-  var colors;
-  if (data.length <= 10){
-    colors = d3.scale.category10().range();
-  }
-  else if (data.length <= 20){
-    colors = d3.scale.category20().range();
-  }
-  else if (data.length <= 40){
-    colors = d3.scale.category20().range().concat(d3.scale.category20b().range());
-  }
-  else if (data.length <= 60){
-    colors = d3.scale.category20().range().concat(d3.scale.category20b().range()).concat(d3.scale.category20c().range());
-  }
-  else{
-    //if pie chart has more than 60 colors, return blank canvas
-    return canvas;
-  }
-
-  var pie = d3.layout.pie()
-    .sort(null)
-    .value(function(d) { return d; });
-
-  var g = canvas.selectAll(".arc")
-      .data(pie(data))
-      .enter().append("g")
-      .attr("class", "arc");
-
-  g.append("path")
-      .attr("d", arc)
-      .style("fill", function(d,i) { return colors[i]; });
-
-  g.append("text")
-      .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
-      .attr("dy", ".35em")
-      .style("text-anchor", "middle")
-      .text(function(d,i) { return config.labels[i]; });
-
-
-  g.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-
-
-  return canvas;
-};
-
-
-// HISTO FUNCTION: creats histogram plot
-histo = function(data,config){
-  if (typeof config === 'undefined'){config = {}};
-  var xLab=config.xLab,selector=config.selector,canvasWidth=config.width,canvasHeight=config.height;
-
-  if(typeof canvasWidth === 'undefined'){
-    canvasWidth = 500;
-  }
-  if(typeof canvasHeight === 'undefined'){
-    canvasHeight = 500;
-  }
-  if(typeof selector === 'undefined'){
-    selector = 'body';
-  }
-  if(typeof xLab === 'undefined'){
-    xLab = '';
-  }
-
-  var hist = function(arr){
-    var newArr = arr.slice().sort(function(a,b){
-        return a-b;
-    });
-
-    var max = newArr[arr.length -1];
-    var min = newArr[0];
-    var bins = Math.round(Math.sqrt(arr.length));
-    var binSize = (max-min)/bins;
-
-    var obj= {};
-    var keys = [];
-    for (var i=0; i<bins; i++){
-        var key = min + (i*binSize);
-        keys.push(key);
-        obj[key] = 0;
-    }
-
-    for (var j=0; j<arr.length; j++){
-        var val = min;
-        var temp_key = 0;
-        while(true){
-            if (newArr[j] == newArr[newArr.length-1]){
-                obj[keys[keys.length-1]] += 1;
-                break;
-            }
-            else if (newArr[j]<val+binSize){
-                obj[keys[temp_key]]+= 1;
-                break;
-            }
-            else{
-                temp_key += 1;
-                val += binSize;
-            }
-        }
-    }
-
-      return [obj,min,max,binSize];
+    return self;
   };
 
-  var height = canvasHeight/1.3;
-  var width = canvasWidth/1.3;
-  if (canvasHeight - height < 75){height -= 45};
+  self.pie = function(input) {
+    buildPie(input);
+    renderPie(input);
 
-  var allData = hist(data);
+    return self;
+  };
 
-  var xMap = d3.scale.linear()
-                  .domain([allData[1],allData[2]])
-                  .range([0,width]);
+  self.bar = function(input) {
+    buildBar(input);
+    renderBar(input);
 
-  var maxfreq = Math.max.apply( null,Object.keys(allData[0]).map(function ( key ) { return allData[0][key]; }) );
+    return self;
+  };
 
-  var yMap = d3.scale.linear()
-                  .domain([maxfreq,0])
-                  .range([0,height]);
+  self.hist = function(dataset) {
+    var histData = buildHist(dataset);
 
-  var objects = start(xLab,'Frequency',xMap,yMap,canvasWidth,canvasHeight,width,height,selector);
+    return self.bar({
+      groups: histData.bins.map(function(bin) {
+        return formatBinString(bin, histData.binSize)
+      }),
+      datasets: [ { values: histData.values } ]
+    });
+  };
 
-  var canvas = objects[0];
-  var everything = objects[1];
+  self.timeline = function(events) {
+    var formattedEvents = formatEvents(events);
+    buildTimeline(formattedEvents);
+    renderTimeline(formattedEvents);
 
-  //MAKE AN ARRAY OF THE DATA TO BIND
-  var obj = allData[0];
-  var keys = Object.keys(obj);
-  var arr = [];
-  for (var i=0;i<keys.length;i++){
-      arr.push(obj[keys[i]]);
-  }
+    return self;
+  };
 
-  // obj,min,max,binSize
-  var binSize = xMap(allData[3] + allData[1]);
-  var padding = binSize * 0.075;
-  //padding used to create a buffer around each bin
+  function buildCanvas() {
+    self.canvas = d3.select(config.selector || 'body')
+                  .append('svg')
+                  .attr('height', height)
+                  .attr('width', width);
+  };
 
-  everything.selectAll('rect')
-        .data(arr)
-        .enter()
-        .append('rect')
-        .attr('x', function(d,index){
-          return (index*binSize + padding/2);
-        })
-        .attr('y', function(d){
-          return yMap(d);
-        })
-        .attr('height', function(d){
-          return Math.max(yMap(maxfreq - d) - 0.5, 0);
-        })
-        .attr('width', binSize-padding)
-        .style('fill', 'steelBlue');
+  function buildXMap(datasets) {
+    var values = datasets.map(function(d) { return d.x }).reduce(function(a, b) { return a.concat(b) });
+    var ordinalValues = (typeof values[0] == 'string');
 
-  return canvas;
-};
-// END OF HIST FUNCTION
-
-// BEGINNING OF XY PLOT FUNCTION
-xyPlot = function(x,y,config){
-  if (typeof config === 'undefined'){config = {}};
-  var xLab=config.xLab,yLab=config.yLab,selector=config.selector,canvasWidth=config.width,canvasHeight=config.height;
-
-  if(typeof canvasWidth === 'undefined'){
-    canvasWidth = 500;
-  }
-  if(typeof canvasHeight === 'undefined'){
-    canvasHeight = 500;
-  }
-  if(typeof selector === 'undefined'){
-    selector = 'body';
-  }
-
-  var xSort = x.slice().sort(function(a,b){
-      return a-b;
-  });
-
-  var ySort = y.slice().sort(function(a,b){
-      return a-b;
-  });
-  var yMax = ySort[ySort.length-1];
-  var yMin = ySort[0];
-
-
-  var height = canvasHeight/1.3;
-  var width = canvasWidth/1.3;
-  if (canvasHeight - height < 75){height -= 45};
-
-  if (typeof x[0] !== 'number'){
-    if (typeof Date.parse(x[0]) === 'number'){
-      // if we're here, x[0] is a date
-      var xMap = d3.time.scale()
-                      .domain([new Date(x[0]),new Date(x[x.length-1])])
-                      .range([0,width]);
-      x.forEach(function(element,index){
-        x[index] = new Date(x[index]);
-      });
+    if (ordinalValues) {
+      var xDomain = getUniqueValues(values);
+      self.xMap = d3.scale.ordinal()
+                  .domain(xDomain)
+                  .rangePoints([margin.left, width - margin.right]);
     }
-  }
-  else{
-    // boundaries for numeric x
-    var xMax = xSort[xSort.length-1];
-    var xMin = xSort[0];
+    else {
+      var xDomain = getBoundaries(values);
+      self.xMap = d3.scale.linear()
+                  .domain(xDomain)
+                  .range([margin.left, width - margin.right]);
+    };
+  };
 
-    var xMap = d3.scale.linear()
-                    .domain([xMin,xMax])
-                    .range([0,width]);
-  }
+  function buildYMap(datasets) {
+    var values = datasets.map(
+      function(d) { return d.y }
+    ).reduce(function(a, b) { return a.concat(b) }, []);
 
-  var yMap = d3.scale.linear()
-                  .domain([yMax,yMin])
-                  .range([0,height]);
+    var yDomain = getBoundaries(values);
+    self.yMap = d3.scale.linear()
+               .domain(yDomain)
+               .range([height - margin.bottom, margin.top]);
+  };
 
-  var objects = start(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selector);
+  function buildZMap(datasets) {
+    var basePointSize = 3;
+    var values = datasets.map(function(d) { return d.z })
+                .reduce(function(a, b) { return a.concat(b) }, [])
+                .filter(function(a) { return (typeof a !== 'undefined') });
 
-  var canvas = objects[0];
-  var everything = objects[1];
+    if (values.length == 0) {
+      self.zMap = function() { return basePointSize };
+    }
+    else {
+      var zDomain = getBoundaries(values);
+      self.zMap = function(value) {
+        if (typeof value === 'undefined') return basePointSize;
+        sizeBonus = 9 * (value - zDomain[0]) / (zDomain[1] - zDomain[0]);
+        return basePointSize * (1 + sizeBonus);
+      };
+    };
+  };
 
-  for (var i=1;i<x.length;i++){
-    everything.append('line')
-              .attr('stroke-width',1)
-              .attr('stroke','black')
-              .attr('x1',xMap(x[i-1]))
-              .attr('x2',xMap(x[i]))
-              .attr('y1',yMap(y[i-1]))
-              .attr('y2',yMap(y[i]));
-  }
+  function buildXAxis() {
+    var xAxis = d3.svg.axis()
+                .scale(self.xMap);
 
-  return canvas;
+    self.canvas.append('g')
+          .attr('transform','translate(0,' + (height - margin.bottom) + ')')
+          .call(xAxis);
+  };
 
-};
+  function buildYAxis() {
+    var yAxis = d3.svg.axis()
+                .tickFormat(d3.format('s'))
+                .scale(self.yMap)
+                .orient('left');
 
-// START OF SCATTER FUNCTION
-scatter = function(x,y,config){
-  if (typeof config === 'undefined'){config = {}};
-  var xLab=config.xLab,yLab=config.yLab,selector=config.selector,canvasWidth=config.width,canvasHeight=config.height,z=config.size,zLab=config.sizeLab;
+    self.canvas.append('g')
+          .attr('transform','translate(' + margin.left + ', 0)')
+          .call(yAxis);
+  };
 
-  if(typeof canvasWidth === 'undefined'){
-    canvasWidth = 500;
-  }
-  if(typeof canvasHeight === 'undefined'){
-    canvasHeight = 500;
-  }
-  if(typeof selector === 'undefined'){
-    selector = 'body';
-  }
+  function buildAxes() {
+    buildXAxis();
+    buildYAxis();
+  };
 
-  var xSort = x.slice().sort(function(a,b){
-        return a-b;
-  });
+  function buildLabels() {
+    var xLabel = self.canvas.append('text')
+                .attr('x', margin.left + innerWidth / 2)
+                .attr('y', margin.top + innerHeight + margin.bottom / 2)
+                .text(config.xLab)
+                .attr('text-anchor', 'middle')
+                .attr('class', 'label');
 
-  var ySort = y.slice().sort(function(a,b){
-        return a-b;
+    var yLabel = self.canvas.append('text')
+                .attr('x', - (margin.top + innerHeight / 2))
+                .attr('y', margin.left / 2)
+                .attr('transform', 'rotate(-90)')
+                .text(config.yLab)
+                .attr('text-anchor', 'middle')
+                .attr('class', 'label');
+
+    var title = self.canvas.append('text')
+                .attr('x', margin.left + innerWidth / 2)
+                .attr('y', margin.top / 2)
+                .text(config.title)
+                .attr('text-anchor', 'middle')
+                .attr('class', 'title');
+  };
+
+  function buildPlot(input) {
+    buildCanvas();
+    buildXMap(input.datasets);
+    buildYMap(input.datasets);
+    buildZMap(input.datasets);
+    buildAxes();
+    buildLabels();
+    buildLegend(input.datasets, input.labels);
+  };
+
+  function buildLegend(datasets, labels) {
+    if (typeof labels === 'undefined' || config.legend == false) return;
+
+    var colors = parseColors(datasets);
+
+    var legend = self.canvas.append("g")
+        .attr("class", "legend");
+
+    colors.forEach(function(color, index) {
+      legend.append("rect")
+          .attr("x", width - 18)
+          .attr("y", index * 20)
+          .attr("width", 18)
+          .attr("height", 18)
+          .style("fill", color);
+
+      legend.append("text")
+          .attr("x", width - 24)
+          .attr("y", index * 20 + 9)
+          .attr("dy", ".35em")
+          .style("text-anchor", "end")
+          .text(labels[index]);
+    });
+  };
+
+  function buildBar(input) {
+    var structuredData = [
+      {
+        x: input.groups.map(String),
+        y: input.datasets
+                .map(function(dataset) { return dataset.values })
+                .reduce(function(a, b) { return a.concat(b) }, [])
+                .concat([0])
+      }
+    ];
+
+    buildCanvas();
+    buildYMap(structuredData);
+    buildXMapBar(input);
+    buildAxes();
+    buildLabels();
+    buildLegend(input.datasets, input.labels);
+  };
+
+  function buildXMapBar(input) {
+    var datasetIndexes = input.datasets.map(function(dataset, index) { return index });
+
+    self.xMap = d3.scale.ordinal()
+        .domain(input.groups)
+        .rangeRoundBands([margin.left, width - margin.right], .1);
+
+    self.innerXMap = d3.scale.ordinal()
+        .domain(datasetIndexes)
+        .rangeRoundBands([0, self.xMap.rangeBand()], .05);
+  };
+
+  function buildHist(dataset) {
+    var domain = getBoundaries(dataset),
+        binCount = Math.round(Math.sqrt(dataset.length)),
+        binSize = (domain[1] - domain[0]) / binCount,
+        bins = [],
+        values = [];
+
+    for (var i = 0; i < binCount; i++) {
+      bins.push(domain[0] + i * binSize);
+      values.push(0);
+    };
+
+    dataset.forEach(function(value) { values[bindex(bins, value)] += 1 });
+
+    return {
+      binSize: binSize,
+      bins: bins,
+      values: values
+    };
+  };
+
+  function buildArcs(input) {
+    var radius = Math.min(innerWidth, innerHeight) / 2;
+
+    self.arc = d3.svg.arc()
+      .outerRadius(radius - 10)
+      .innerRadius(0);
+
+    var pie = d3.layout.pie()
+      .sort(null)
+      .value(function(d) { return d });
+
+    self.arcGroup = self.canvas.selectAll('.arc')
+        .data(pie(input.values))
+        .enter().append('g')
+        .attr('class', 'arc');
+  };
+
+  function buildPie(input) {
+    buildCanvas();
+    buildLabels();
+    buildArcs(input);
+    buildLegend(input.values, input.labels);
+  };
+
+  function buildYMapTimeline(maxFreq) {
+    self.yMap = d3.scale.linear()
+                  .domain([0, maxFreq])
+                  .range([height - margin.bottom, margin.top]);
+  };
+
+  function buildXMapTimeline(formattedEvents) {
+    var sortedDates = Object.keys(formattedEvents).sort(function(a, b) {
+      return Date.parse(a) - Date.parse(b);
     });
 
-  if (typeof z !== 'undefined'){
-    var zSort = z.slice().sort(function(a,b){
-          return a-b;
+    var minDate = sortedDates[0]
+        maxDate = sortedDates[sortedDates.length - 1];
+
+    self.xMap = d3.time.scale()
+                  .domain([
+                    Date.parse(minDate),
+                    Date.parse(maxDate)
+                  ])
+                  .nice(d3.time[timeScale(minDate, maxDate)])
+                  .range([margin.left, width - margin.right]);
+  };
+
+  function buildTimeline(formattedEvents) {
+    var maxFreq = maxDateFreq(formattedEvents)
+
+    formatTimelineCanvas(maxFreq);
+    buildCanvas();
+    buildLabels();
+    buildYMapTimeline(maxFreq);
+    buildXMapTimeline(formattedEvents);
+    buildXAxis();
+  };
+
+  function renderPlot(datasets) {
+    var colors = parseColors(datasets);
+
+    datasets.forEach(function(dataset, index) {
+      if (dataset.hasOwnProperty('labels')) {
+        plotText(dataset, colors[index]);
+      }
+      else if (dataset.line) {
+        plotLine(dataset, colors[index]);
+      }
+      else {
+        plotPoints(dataset, colors[index]);
+      };
     });
-  }
+  };
 
-  var yMax = ySort[ySort.length-1];
-  var yMin = ySort[0];
+  function renderBar(input) {
+    var colors = parseColors(input.datasets);
 
-  var height = canvasHeight/1.3;
-  var width = canvasWidth/1.3;
-  if (canvasHeight - height < 75){height -= 45};
-
-  if (typeof x[0] !== 'number'){
-    if (typeof Date.parse(x[0]) === 'number'){
-      // if we're here, x[0] is a date
-      var xMap = d3.time.scale()
-                      .domain([new Date(x[0]),new Date(x[x.length-1])])
-                      .range([0,width]);
-      x.forEach(function(element,index){
-        x[index] = new Date(x[index]);
+    input.datasets.forEach(function(dataset, dataIndex) {
+      dataset.values.forEach(function(value, labelIndex) {
+        self.canvas.append('rect')
+            .attr("width", self.innerXMap.rangeBand())
+            .attr("x", self.xMap(input.groups[labelIndex]) + self.innerXMap(dataIndex))
+            .attr("y", self.yMap(Math.max(value, 0)))
+            .attr("height", Math.abs(self.yMap(value) - self.yMap(0)))
+            .style("fill", colors[dataIndex]);
       });
-    }
-  }
-  else{
-    // boundaries for numeric x
-    var xMax = xSort[xSort.length-1];
-    var xMin = xSort[0];
+    });
+  };
 
-    var xMap = d3.scale.linear()
-                    .domain([xMin,xMax])
-                    .range([0,width]);
-  }
+  function renderPie(input) {
+    var colors = parseColors(input.values);
+    var total = input.values.reduce(function(a, b) {
+      return a + b;
+    });
 
-  var yMap = d3.scale.linear()
-                  .domain([yMax,yMin])
-                  .range([0,height]);
+    self.arcGroup.append('path')
+        .attr('d', self.arc)
+        .style('fill', function(d, i) { return colors[i] });
 
-  if (typeof zLab !== 'undefined'){yLab = yLab+' ('+zLab+')'};
-  var objects = start(xLab,yLab,xMap,yMap,canvasWidth,canvasHeight,width,height,selector);
+    self.arcGroup.append('text')
+        .attr('transform', function(d) { return 'translate(' + self.arc.centroid(d) + ')' })
+        .attr('dy', '.35em')
+        .style('text-anchor', 'middle')
+        .text(function(d, i) {
+          return Math.round(100 * input.values[i] / total) + '%';
+        });
 
-  var canvas = objects[0];
-  var everything = objects[1];
+    self.arcGroup.attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')');
+  };
 
+  function renderTimeline(formattedEvents) {
+    Object.keys(formattedEvents).forEach(function(date) {
+      formattedEvents[date].forEach(function(label, index) {
+        self.canvas.append('text')
+          .attr('class', 'timeline-text')
+          .attr('x', self.xMap(Date.parse(date)))
+          .attr('y', self.yMap(index + 1))
+          .text(label)
+          .attr('text-anchor', 'middle')
+          .attr('stroke', 'black');
+      });
+    });
+  };
 
-  x.forEach(function(elem,index){
-    everything.append('circle')
-              .attr('r',function(){
-                if (typeof z === 'undefined'){
-                  return height*width*(0.00002);
-                }
-                else{
-                  return (height*width*0.000025 + (z[index]-zSort[0])*(height*width*(0.0001))/(zSort[zSort.length-1] - zSort[0]));
-                }
-              })
-              .attr('cx',xMap(x[index]))
-              .attr('cy',yMap(y[index]))
-              .attr('opacity',function(){
-                if (typeof z === 'undefined'){
-                  return 1;
-                }
-                else{
-                  return 0.3;
-                }
-              })
-              .attr('fill',function(){
-                if (typeof z === 'undefined'){
-                  return 'none';
-                }
-                else{
-                  return 'steelBlue';
-                }
-              })
-              .attr('stroke', function(){
-                if (typeof z === 'undefined'){return'black'};
-                return 'none'
-              });
-  });
+  function plotPoints(dataset, color) {
+    for (var i = 0; i < dataset.x.length; i++) {
+      self.canvas.append('circle')
+          .attr('class', 'plot-circle')
+          .attr('cx', self.xMap(dataset.x[i]))
+          .attr('cy', self.yMap(dataset.y[i]))
+          .attr('r', function() {
+            if (dataset.hasOwnProperty('z')) return self.zMap(dataset.z[i]);
+            return self.zMap();
+          })
+          .attr('opacity', 0.5)
+          .attr('fill', color);
+    };
+  };
 
-  return canvas;
+  function plotLine(dataset, color) {
+    for (var i = 1; i < dataset.x.length; i++) {
+      self.canvas.append('line')
+          .attr('class', 'plot-line')
+          .attr('stroke-width', 1)
+          .attr('stroke', color)
+          .attr('x1', self.xMap(dataset.x[i - 1]))
+          .attr('x2', self.xMap(dataset.x[i]))
+          .attr('y1', self.yMap(dataset.y[i - 1]))
+          .attr('y2', self.yMap(dataset.y[i]));
+    };
+  };
 
-}
+  function plotText(dataset, color) {
+    for (var i = 0; i < dataset.x.length; i++) {
+      self.canvas.append('text')
+          .attr('class', 'plot-text')
+          .attr('x', self.xMap(dataset.x[i]))
+          .attr('y', self.yMap(dataset.y[i]))
+          .text(dataset.labels[i])
+          .attr('text-anchor', 'middle')
+          .attr('fill', color)
+    };
+  };
 
+  function getBoundaries(data) {
+    var min = Math.min.apply(null, data);
+    var max = Math.max.apply(null, data);
+    return [min, max];
+  };
+
+  function getUniqueValues(data) {
+    var seenValues = {}, uniques = [];
+    data.forEach(function(val) {
+      if (seenValues[val] != 1) {
+        seenValues[val] = 1;
+        uniques.push(val);
+      };
+    });
+    return uniques;
+  };
+
+  function parseColors(datasets) {
+    var defaultColor = d3.scale.category10();
+
+    return datasets.map(function(dataset, index) {
+      if (isNaN(dataset)) {
+        return dataset.color || defaultColor(index);
+      }
+      else {
+        return defaultColor(index);
+      };
+    });
+  };
+
+  function bindex(bins, value) {
+    var bindex = 0;
+    while (true) {
+      if (bindex == bins.length - 1) return bindex;
+      if (value < bins[bindex + 1]) {
+        return bindex;
+      }
+      else {
+        bindex++;
+      };
+    };
+  };
+
+  function round2(num) {
+    return Math.round(num * 100) / 100;
+  };
+
+  function maxDateFreq(formattedEvents) {
+    var maxFreq = Object.keys(formattedEvents).map(function(date) {
+      return formattedEvents[date].length;
+    }).reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
+
+    return maxFreq;
+  };
+
+  function timeScale(minDate, maxDate) {
+    var periods = {
+      second: 1000,
+      minute: 60000,
+      hour: 3600000,
+      day: 86400000,
+      week: 604800000,
+      month: 2678400000,
+      year: 31536000000
+    };
+
+    var range = Date.parse(maxDate) - Date.parse(minDate),
+        scale = 'second';
+    Object.keys(periods).forEach(function(period) {
+      if (range > periods[period]) scale = period;
+    });
+
+    return scale;
+  };
+
+  function formatBinString(bin, binSize) {
+    return round2(bin) + ' to ' + round2(bin + binSize);
+  };
+
+  function formatEvents(events) {
+    var formattedEvents = {};
+    events.forEach(function(ev) {
+      formattedEvents[ev.date] = formattedEvents[ev.date] || [];
+      formattedEvents[ev.date].push(ev.label);
+    });
+
+    return formattedEvents;
+  };
+
+  function formatTimelineCanvas(maxFreq) {
+    if (!config.hasOwnProperty('height')) {
+      height = 200 + maxFreq * 50;
+    };
+  };
+
+  return self;
+};
