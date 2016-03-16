@@ -505,4 +505,3 @@ function D3xter(config) {
 
   return self;
 };
-
