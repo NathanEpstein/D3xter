@@ -21,7 +21,7 @@ For full documentation complete with examples, visit <a href="http://d3xterjs.gi
 
 Run unit tests by opening test/test.html in the browser.
 
-Pull requests (additional testing, new plots, etc.) welcome.
+Pull requests welcome!
 
 ## License
 
