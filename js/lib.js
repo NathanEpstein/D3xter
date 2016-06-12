@@ -114,7 +114,12 @@ function D3xter(config) {
 
     self.canvas.append('g')
           .attr('transform','translate(0,' + (height - margin.bottom) + ')')
-          .call(xAxis);
+          .call(xAxis)
+          .selectAll('text')
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em")
+          .attr("dy", "-0.5em")
+          .attr("transform", "rotate(-90)" );
   };
 
   function buildYAxis() {
