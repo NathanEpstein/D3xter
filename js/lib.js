@@ -38,9 +38,7 @@ function D3xter(config) {
     var histData = buildHist(dataset);
 
     return self.bar({
-      groups: histData.bins.map(function(bin) {
-        return formatBinString(bin, histData.binSize)
-      }),
+      groups: histData.bins.map(function(bin) { return round2(bin) }),
       datasets: [ { values: histData.values } ]
     });
   };
@@ -486,10 +484,6 @@ function D3xter(config) {
     });
 
     return scale;
-  };
-
-  function formatBinString(bin, binSize) {
-    return round2(bin) + ' to ' + round2(bin + binSize);
   };
 
   function formatEvents(events) {
