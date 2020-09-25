@@ -432,7 +432,7 @@ function D3xter(config) {
     var defaultColor = d3.scale.category10();
 
     return datasets.map(function(dataset, index) {
-      if (isNaN(dataset)) {
+      if (Number.isNaN(dataset)) {
         return dataset.color || defaultColor(index);
       }
       else {
